@@ -1,0 +1,4 @@
+window.PLATTER_CONFIG = {
+  SUPABASE_URL: 'https://your-project-id.supabase.co',
+  SUPABASE_KEY: 'your-anon-key'
+};
