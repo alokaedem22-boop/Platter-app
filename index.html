@@ -62,11 +62,7 @@ header .tab{padding:0 9px;white-space:nowrap;font-size:13px}#out{margin-left:aut
 <main><div id="msg" role="status" aria-live="polite"></div><div id="view"></div></main>
 <footer class="m" style="text-align:center;padding:0 16px 28px;position:relative;z-index:1"><a href="terms.html">Terms of Use</a> &middot; <a href="privacy.html">Privacy Notice</a></footer>
 
-<script src="config.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
-const { SUPABASE_URL, SUPABASE_KEY } = window.PLATTER_CONFIG || { SUPABASE_URL: 'https://demo.supabase.co', SUPABASE_KEY: 'demo-key' };
-
 const MOVE = 'Pickup & goods transport';
 const TRADES = ['Tiling','Kitchen cabinet installation','Door installation','Bathroom fitting & plumbing', MOVE];
 const ST = {draft:['Draft',''],needs_clarification:['Needs details','warn'],submitted:['Waiting for a match',''],pending:['Sent to provider',''],accepted:['Provider interested',''],declined:['Declined','gray'],booked:['Booked',''],awaiting_confirmation:['Work done, please confirm','warn'],completed:['Completed','good'],cancelled:['Cancelled','gray'],disputed:['Disputed','warn']};
@@ -122,92 +118,32 @@ const tag = s => `<span class="tag ${(ST[s]||['',''])[1]}">${esc((ST[s]||[s])[0]
 const opts = (arr, sel) => arr.map(a => `<option value="${esc(a)}"${a === sel ? ' selected' : ''}>${esc(a)}</option>`).join('');
 const day = t => new Date(t).toLocaleDateString([], {day:'numeric', month:'short'});
 const tel = p => p ? `<a href="tel:${esc(p)}">${esc(p)}</a>` : '';
-const GLOGO = '<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>';
 
-function moveDetails(f) {
-  if (f.get('category') !== MOVE) return {};
-  const t = k => String(f.get(k) || '').trim().slice(0, 200);
-  return { from: t('mv_from'), to: t('mv_to'), items: t('mv_items'), vehicle: t('mv_vehicle'), help: f.get('mv_help') === 'on' };
-}
-function detailsHtml(r) {
-  const d = r.details || {}; if (!d.from && !d.to && !d.items) return '';
-  return `<p class="m" style="margin:6px 0">${d.from ? 'Collect from: <b>' + esc(d.from) + '</b>' : ''}${d.to ? ' · Deliver to: <b>' + esc(d.to) + '</b>' : ''}${d.items ? ' · Items: ' + esc(d.items) : ''}${d.vehicle ? ' · Vehicle: ' + esc(d.vehicle) : ''}${d.help ? ' · Loading help needed' : ''}</p>`;
-}
+var me = null, tab = 'discover', projFilter = 'all', prefillCategory = '', prefillArtisan = '';
+var myRequests = [];
+
 function flash(t, bad) { const m = $('#msg'); m.className = bad ? 'err' : 'm'; m.textContent = t; }
 
-if (SUPABASE_URL.startsWith('PASTE')) {
-  view.innerHTML = '<div class="card auth"><h1>Setup needed</h1><p>Open config.js and paste your Supabase project URL and anon key.</p></div>';
-} else {
-  var sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-  var me = null, tab = '', filter = 'all', projFilter = 'all', prefillCategory = '', prefillArtisan = '';
-  boot();
-}
-
-async function boot() {
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session) { me = null; $('#out').hidden = true; $('#nav').innerHTML = ''; $('#home').classList.remove('on'); return authView('login'); }
-  const { data, error } = await sb.from('profiles').select('*').eq('id', session.user.id).single();
-  if (error || !data) { await sb.auth.signOut(); flash('Could not load your profile. Please log in again.', true); return authView('login'); }
-  me = data; $('#out').hidden = false;
-  if (me.is_suspended) { await sb.auth.signOut(); $('#out').hidden = true; flash('This account has been suspended. Please contact Platter.', true); return authView('login'); }
-  if (!me.consented_at && me.role !== 'admin') return finishView();
-  go(me.role === 'admin' ? 'admin' : me.role === 'artisan' ? 'provider' : 'discover');
+function boot() {
+  go('discover');
 }
 
 function go(t) {
   tab = t; flash('');
-  $('#home').classList.toggle('on', (t === 'admin' && me.role === 'admin') || t === 'discover');
+  $('#home').classList.toggle('on', t === 'discover');
   
-  if (me.role === 'admin') {
-    $('#nav').innerHTML = [['discover','Discover'],['customer','Request Service'],['provider','Provider'],['admin','Admin']].map(([k,l]) => `<button class="tab${k===t?' on':''}" data-go="${k}">${l}</button>`).join('');
-  } else if (me.role === 'customer') {
-    $('#nav').innerHTML = [['discover','Discover'],['customer','Request Service'],['mine','My Requests']].map(([k,l]) => `<button class="tab${k===t?' on':''}" data-go="${k}">${l}</button>`).join('');
-  } else {
-    $('#nav').innerHTML = [['discover','Discover'],['provider','Provider']].map(([k,l]) => `<button class="tab${k===t?' on':''}" data-go="${k}">${l}</button>`).join('');
-  }
+  $('#nav').innerHTML = [
+    ['discover','Discover'],
+    ['customer','Request Service'],
+    ['mine','My Requests'],
+    ['provider','Provider Portal']
+  ].map(([k,l]) => `<button class="tab${k===t?' on':''}" data-go="${k}">${l}</button>`).join('');
 
-  const views = { discover: discoverView, customer: customerView, mine: myRequestsView, provider: providerView, admin: adminView };
+  const views = { discover: discoverView, customer: customerView, mine: myRequestsView, provider: providerView };
   if (views[t]) views[t]();
 }
 
-$('#out').onclick = async () => { await sb.auth.signOut(); boot(); };
-$('#home').onclick = () => { if (me) go('discover'); else authView('login'); };
-
-/* ---------- Sign up and log in ---------- */
-function authView(mode) {
-  const su = mode === 'signup';
-  view.innerHTML = `<div class="card auth"><h1>${su ? 'Create your account' : 'Log in'}</h1>
-  <p class="m">Reliable help, on a silver platter.</p>
-  <button class="gbtn" id="gbtn" type="button">${GLOGO}Continue with Google</button>
-  <div class="or"><span>${su ? 'or sign up with email' : 'or log in with email'}</span></div>
-  <form id="af">
-    ${su ? `<label>Full name<input name="full_name" required autocomplete="name"></label>
-    <label>Phone number<input name="phone" type="tel" required autocomplete="tel" placeholder="+233..."></label>
-    <label>I want to<select name="role" id="role"><option value="customer">Find a service</option><option value="artisan">Offer a service</option></select></label>
-    <div id="pfields" hidden><label>Your trade<select name="trade">${opts(TRADES)}</select></label>
-    <label>Area you cover<input name="area" placeholder="Neighbourhood or district"></label></div>` : ''}
-    <label>Email<input name="email" type="email" required autocomplete="email"></label>
-    <label>Password<input name="password" type="password" required minlength="6" autocomplete="${su ? 'new-password' : 'current-password'}"></label>
-    ${su ? `<div style="display: flex; align-items: flex-start; gap: 8px; margin: 12px 0;"><input type="checkbox" name="consent" required style="margin-top: 3px; flex-shrink: 0;"><span style="font-size: 13px; line-height: 1.4; color: #4a5568;">I agree to the <a href="terms.html" target="_blank" rel="noopener" style="color: #0d9488; text-decoration: underline;">Terms of Use</a> and have read the <a href="privacy.html" target="_blank" rel="noopener" style="color: #0d9488; text-decoration: underline;">Privacy Notice</a>.</span></div>` : ''}
-    <div id="aerr" class="err"></div>
-    <button class="btn" style="width:100%">${su ? 'Create account' : 'Log in'}</button>
-  </form>
-  <p class="m" style="margin-top:14px"><button class="tab" style="color:var(--dark);padding:0" data-go="${su ? 'login' : 'signup'}">${su ? 'I already have an account' : 'Create an account'}</button> &middot; <button class="tab" style="color:var(--dark);padding:0" data-go="discover">Browse Discover Feed</button></p></div>`;
-  const role = $('#role'); if (role) role.onchange = () => $('#pfields').hidden = role.value !== 'artisan';
-  $('#gbtn').onclick = async () => { const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + location.pathname } }); if (error) $('#aerr').textContent = error.message; };
-  $('#af').onsubmit = async e => {
-    e.preventDefault(); const f = Object.fromEntries(new FormData(e.target)); const out = $('#aerr'); out.textContent = '';
-    if (su) {
-      const { data, error } = await sb.auth.signUp({ email: f.email, password: f.password, options: { data: { full_name: f.full_name, phone: f.phone, role: f.role, trade: f.trade, area: f.area, consent: f.consent ? 'true' : 'false' } } });
-      if (error) return out.textContent = error.message;
-      if (!data.session) { out.textContent = 'Account created. Check your email to confirm it, then log in.'; return; }
-    } else {
-      const { error } = await sb.auth.signInWithPassword({ email: f.email, password: f.password });
-      if (error) return out.textContent = error.message;
-    }
-    boot();
-  };
-}
+$('#home').onclick = () => go('discover');
 
 /* ---------- Discover Feed (Behance-style project showcase) ---------- */
 function discoverView() {
@@ -216,7 +152,7 @@ function discoverView() {
     <div class="card" style="background:linear-gradient(135deg,var(--dark),var(--deep));color:#fff;margin-bottom:16px;border:0">
       <h1>Discover Ghana's Skilled Artisans</h1>
       <p style="margin:6px 0 14px;color:#E3F1EE">Explore verified completed projects in tiling, kitchen cabinets, doors, and carpentry before hiring.</p>
-      ${!me ? `<button class="btn" style="background:#fff;color:var(--dark)" data-go="signup">Create account to hire</button>` : `<button class="btn" style="background:#fff;color:var(--dark)" data-go="customer">Request a Service</button>`}
+      <button class="btn" style="background:#fff;color:var(--dark)" data-go="customer">Request a Service</button>
     </div>
     
     <div class="toolbar" style="background:transparent;padding:0;margin-bottom:14px">
@@ -251,237 +187,98 @@ function discoverView() {
         </div>
       `).join('')}
     </div>
-    ${accountBox()}
   `;
 }
 
-/* ---------- Your information (all signed-in people) ---------- */
-function accountBox() {
-  if (!me || me.role === 'admin') return '';
-  return `<h2 style="margin-top:30px">Your information</h2><div class="card"><p class="m" style="margin:0 0 10px">You can ask us to delete your account and the information we hold about you. See the <a href="privacy.html" target="_blank" rel="noopener">Privacy Notice</a>.</p>${me.deletion_requested_at ? `<span class="tag warn">Deletion requested on ${day(me.deletion_requested_at)}</span>` : '<button class="ghost sm" data-act="deleteme">Request deletion of my account</button>'}</div>`;
-}
-
-/* ---------- Finish setting up (first Google sign-in) ---------- */
-function finishView() {
-  $('#nav').innerHTML = ''; $('#home').classList.remove('on');
-  view.innerHTML = `<div class="card auth"><h1>Finish setting up</h1><p class="m">Welcome${me.full_name ? ', ' + esc(me.full_name) : ''}. Tell us a little more so Platter can help you.</p>
-  <form id="ff">
-    <label>Phone number<input name="phone" type="tel" required autocomplete="tel" placeholder="+233..." value="${esc(me.phone)}"></label>
-    <label>I want to<select name="role" id="role"><option value="customer">Find a service</option><option value="artisan"${me.role === 'artisan' ? ' selected' : ''}>Offer a service</option></select></label>
-    <div id="pfields" hidden><label>Your trade<select name="trade">${opts(TRADES)}</select></label><label>Area you cover<input name="area" placeholder="Neighbourhood or district"></label></div>
-    <label><input type="checkbox" name="consent" required>I agree to the <a href="terms.html" target="_blank" rel="noopener">Terms of Use</a> and have read the <a href="privacy.html" target="_blank" rel="noopener">Privacy Notice</a>. I agree that Platter may collect and use my information as described in it.</label>
-    <div id="aerr" class="err"></div><button class="btn" style="width:100%">Continue</button></form></div>`;
-  const role = $('#role'); role.onchange = () => $('#pfields').hidden = role.value !== 'artisan'; role.onchange();
-  $('#ff').onsubmit = async e => { e.preventDefault(); const f = Object.fromEntries(new FormData(e.target)); const { error } = await sb.rpc('complete_signup', { p_phone: f.phone.trim(), p_role: f.role, p_trade: f.trade || null, p_area: (f.area || '').trim() }); if (error) return $('#aerr').textContent = error.message; boot(); };
-}
-
-/* ---------- Customer dashboard (Request a service) ---------- */
+/* ---------- Customer dashboard ---------- */
 function customerView() {
-  if (!me) { return authView('login'); }
   view.innerHTML = `<h1>Request a provider</h1><p class="m">Tell us what you need and we will match you with a verified provider.</p>
-  <div class="note">Never pay a deposit before a provider has confirmed the job and agreed the price. Platter will never ask for your password or a code sent to your phone.</div>
+  <div class="note">Never pay a deposit before a provider has confirmed the job and agreed the price.</div>
   
   ${prefillArtisan ? `<div class="card" style="background:var(--tint);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between"><span>Target Artisan: <b>${esc(prefillArtisan)}</b></span><button class="ghost sm" data-act="clearartisan">Remove</button></div>` : ''}
 
   <form class="card" id="rf" style="margin-top:14px">
     <label>Service<select name="category" required>${opts(TRADES, prefillCategory)}</select></label>
-    <label>What needs doing?<textarea name="description" rows="3" placeholder="For example: floor tiles for a kitchen, about 12 m². Not sure yet? You can leave this blank."></textarea></label>
-    <div class="row"><label class="grow">Area<input name="area" placeholder="Neighbourhood or district"></label>
+    <label>What needs doing?<textarea name="description" rows="3" placeholder="For example: floor tiles for a kitchen, about 12 m²."></textarea></label>
+    <div class="row"><label class="grow">Area<input name="area" placeholder="Neighbourhood or district" required></label>
     <label class="grow">Preferred date<input name="preferred_date" type="date"></label></div>
-    <div id="movefields" hidden class="card" style="background:#F1F8F6;margin-bottom:12px"><b>Transport details</b>
-      <label style="margin-top:10px">Collect from (shop or supplier)<input name="mv_from" maxlength="200"></label>
-      <label>Deliver to<input name="mv_to" maxlength="200" placeholder="Address or landmark"></label>
-      <label>What are you moving, and roughly how many?<input name="mv_items" maxlength="200" placeholder="For example: 30 boxes of floor tiles"></label>
-      <label>Vehicle<select name="mv_vehicle"><option>Any suitable vehicle</option><option>Pickup</option><option>Truck</option></select></label>
-      <label><input type="checkbox" name="mv_help">I need help loading and unloading</label></div>
-    <label><input type="checkbox" name="consent" required>I agree to share my name, phone number, area, and job details with the provider matched to this request. I understand I can ask Platter to delete my information at any time.</label>
     <button class="btn">Send request</button>
-  </form>
-  ${accountBox()}`;
+  </form>`;
   
-  $('#rf').onsubmit = async e => {
+  $('#rf').onsubmit = e => {
     e.preventDefault(); const f = new FormData(e.target);
-    const { error } = await sb.from('job_requests').insert({ category: f.get('category'), description: f.get('description').trim(), area: f.get('area').trim(), preferred_date: f.get('preferred_date') || null, details: moveDetails(f), consent_to_share_at: new Date().toISOString() });
-    if (error) return flash(error.message, true);
-    flash('Request sent.'); prefillCategory = ''; prefillArtisan = ''; go('mine');
+    myRequests.unshift({
+      id: Date.now(),
+      category: f.get('category'),
+      description: f.get('description'),
+      area: f.get('area'),
+      status: 'submitted',
+      artisan: prefillArtisan || 'Matching Artisan',
+      created_at: new Date().toISOString()
+    });
+    flash('Request sent successfully!');
+    prefillCategory = ''; prefillArtisan = '';
+    go('mine');
   };
-  const cs = $('#rf select[name=category]'); cs.onchange = () => $('#movefields').hidden = cs.value !== MOVE; cs.onchange();
 }
 
-/* ---------- My requests tab ---------- */
-async function myRequestsView() {
-  if (!me) return authView('login');
-  view.innerHTML = `<h1>My requests</h1><div id="mine" class="list"><p class="m">Loading…</p></div>${accountBox()}`;
-  loadMine();
-}
-
-async function loadMine() {
-  const { data, error } = await sb.from('job_requests').select('*,artisan:profiles!artisan_id(full_name,phone)').eq('customer_id', me.id).order('created_at', { ascending: false });
-  const box = $('#mine'); if (!box) return; if (error) return box.innerHTML = `<p class="err">${esc(error.message)}</p>`;
-  if (!data.length) return box.innerHTML = '<p class="m">No requests yet. Send your first one from the Request Service tab.</p>';
-  box.innerHTML = data.map(r => {
-    const act = (s, l, c = 'btn') => `<button class="${c} sm" data-act="status" data-id="${r.id}" data-val="${s}">${l}</button>`;
-    let b = '';
-    if (r.status === 'accepted') b += act('booked', 'Confirm booking');
-    if (['booked','awaiting_confirmation'].includes(r.status)) b += act('completed', 'Mark completed');
-    if (!['completed','cancelled'].includes(r.status)) b += act('cancelled', 'Cancel request', 'ghost');
-    const edit = r.status === 'needs_clarification' ? `<form data-edit="${r.id}" class="row" style="margin-top:10px"><label class="grow">Area<input name="area" value="${esc(r.area)}" placeholder="Neighbourhood or district" required></label><label class="grow">Details<input name="description" value="${esc(r.description)}"></label><label class="grow">Date<input name="preferred_date" type="date" value="${esc(r.preferred_date || '')}"></label><button class="btn sm">Save details</button></form>` : '';
-    return `<div class="card"><div class="row"><b class="grow">${esc(r.category)}</b>${tag(r.status)}</div>
-    <div class="m">${day(r.created_at)}${r.area ? ' · ' + esc(r.area) : ''}</div>
-    ${r.description ? `<p style="margin:8px 0">${esc(r.description)}</p>` : ''}
-    ${r.artisan ? `<p class="m">Provider: <b>${esc(r.artisan.full_name)}</b> ${tel(r.artisan.phone)}</p>` : ''}
-    ${detailsHtml(r)}${edit}<div class="row" style="margin-top:8px">${b}${r.artisan_id ? `<button class="tab sm" style="color:#8A1F1F;padding:0 6px" data-act="report" data-id="${r.id}" data-val="${r.artisan_id}">Report a problem</button>` : ''}</div></div>`;
-  }).join('');
-}
-
-/* ---------- Provider dashboard ---------- */
-async function providerView() {
-  if (!me) return authView('login');
-  const { data: ap } = await sb.from('artisan_profiles').select('*').eq('user_id', me.id).maybeSingle();
-  if (!ap) return view.innerHTML = me.role === 'admin'
-    ? '<h1>Provider view</h1><p class="m">You do not have a provider profile yet.</p><button class="btn" data-act="mkprov">Create my provider profile</button>'
-    : '<p>No provider profile found.</p>';
-  const note = { pending: 'Waiting for approval. You will receive requests once Platter approves your profile.', approved: 'Approved. You can receive requests.', rejected: 'Your profile was not approved. Contact Platter for help.' }[ap.verification_status];
-  view.innerHTML = `<h1>My provider profile</h1><p><span class="tag ${ap.verification_status === 'approved' ? 'good' : 'warn'}">${esc(note)}</span></p>
-  <div class="note">Agree the price before you start. Never share your password or a code sent to your phone, and tell Platter if a customer behaves badly.</div>
-  <form class="card" id="pf"><div class="row"><label class="grow">Trade<select name="trade">${opts(TRADES, ap.trade)}</select></label>
-  <label class="grow">Area you cover<input name="area" value="${esc(ap.area)}"></label>
-  <label class="grow">Starting rate (GHS)<input name="starting_rate" type="number" min="0" step="1" value="${esc(ap.starting_rate ?? '')}"></label></div>
-  <label>About your work<textarea name="bio" rows="2">${esc(ap.bio)}</textarea></label>
-  <label><input type="checkbox" name="is_available"${ap.is_available ? ' checked' : ''}>I am available for new jobs</label>
-  <button class="btn">Save profile</button></form>
-  <h2>My requests</h2><div id="jobs" class="list"><p class="m">Loading…</p></div>${accountBox()}`;
-  $('#pf').onsubmit = async e => {
-    e.preventDefault(); const f = new FormData(e.target);
-    const { error } = await sb.from('artisan_profiles').update({ trade: f.get('trade'), area: f.get('area').trim(), bio: f.get('bio').trim(), starting_rate: f.get('starting_rate') === '' ? null : Number(f.get('starting_rate')), is_available: f.get('is_available') === 'on' }).eq('user_id', me.id);
-    flash(error ? error.message : 'Profile saved.', !!error);
-  };
-  const { data, error } = await sb.from('job_requests').select('*,customer:profiles!customer_id(full_name,phone)').eq('artisan_id', me.id).order('created_at', { ascending: false });
-  const box = $('#jobs'); if (error) return box.innerHTML = `<p class="err">${esc(error.message)}</p>`;
-  if (!data.length) return box.innerHTML = '<p class="m">No requests yet. They appear here once Platter matches you.</p>';
-  box.innerHTML = data.map(r => {
-    const act = (s, l, c = 'btn') => `<button class="${c} sm" data-act="status" data-id="${r.id}" data-val="${s}">${l}</button>`;
-    const b = r.status === 'pending' ? act('accepted', 'Accept') + act('declined', 'Decline', 'ghost') : r.status === 'booked' ? act('awaiting_confirmation', 'Mark work done') : '';
-    return `<div class="card"><div class="row"><b class="grow">${esc(r.category)}</b>${tag(r.status)}</div>
-    <div class="m">${day(r.created_at)}${r.area ? ' · ' + esc(r.area) : ''}${r.preferred_date ? ' · wanted by ' + esc(r.preferred_date) : ''}</div>
-    ${r.description ? `<p style="margin:8px 0">${esc(r.description)}</p>` : ''}
-    ${r.customer ? `<p class="m">Customer: <b>${esc(r.customer.full_name)}</b> ${tel(r.customer.phone)}</p>` : ''}
-    ${detailsHtml(r)}<div class="row" style="margin-top:8px">${b}<button class="tab sm" style="color:#8A1F1F;padding:0 6px" data-act="report" data-id="${r.id}" data-val="${r.customer_id}">Report a problem</button></div></div>`;
-  }).join('');
-}
-
-/* ---------- Admin dashboard ---------- */
-let adm = null, q = '', catF = 'all', layout = 'list';
-async function adminView() {
-  if (!me || me.role !== 'admin') return authView('login');
-  view.innerHTML = '<p class="m">Loading…</p>';
-  const [rq, pv, dl, rp] = await Promise.all([
-    sb.from('job_requests').select('*,customer:profiles!customer_id(full_name,phone),artisan:profiles!artisan_id(full_name)').order('created_at', { ascending: false }),
-    sb.from('artisan_profiles').select('*,p:profiles!user_id(full_name,phone,is_suspended)').order('created_at', { ascending: false }),
-    sb.from('profiles').select('id,full_name,phone,role,deletion_requested_at').not('deletion_requested_at', 'is', null),
-    sb.from('reports').select('*,reporter:profiles!reporter_id(full_name),reported:profiles!reported_id(full_name,phone)').eq('status', 'open').order('created_at', { ascending: false })]);
-  const err = rq.error || pv.error; if (err) return flash(err.message, true);
-  adm = { reqs: rq.data, pros: pv.data, dels: dl.data || [], reps: rp.data || [] };
-  window._reqs = adm.reqs;
-  const n = f => adm.reqs.filter(f).length;
-  const provs = adm.pros.map(p => { const sus = p.p?.is_suspended; return `<div class="card row"><div class="grow"><b>${esc(p.p?.full_name)}</b> ${tel(p.p?.phone)}<div class="m">${esc(p.trade)} · ${esc(p.area) || 'No area yet'} · ${p.is_available ? 'Available' : 'Busy'}</div></div>
-    <span class="tag ${sus || p.verification_status === 'rejected' ? 'gray' : p.verification_status === 'approved' ? 'good' : 'warn'}">${sus ? 'suspended' : esc(p.verification_status)}</span>
-    ${!sus && p.verification_status !== 'approved' ? `<button class="btn sm" data-act="verify" data-id="${p.user_id}" data-val="approved">Approve</button>` : ''}
-    ${!sus && p.verification_status !== 'rejected' ? `<button class="ghost sm" data-act="verify" data-id="${p.user_id}" data-val="rejected">Reject</button>` : ''}
-    <button class="ghost sm" data-act="suspend" data-id="${p.user_id}" data-val="${sus ? 'false' : 'true'}">${sus ? 'Reinstate' : 'Suspend'}</button></div>`; }).join('');
-  const reps = adm.reps.map(r => `<div class="card"><div class="row"><b class="grow">${esc(r.reported?.full_name || 'Unknown person')}</b><span class="m">${day(r.created_at)}</span></div>
-    <p style="margin:6px 0">${esc(r.reason)}</p><div class="m">Reported by ${esc(r.reporter?.full_name)} ${tel(r.reported?.phone)}</div>
-    <div class="row" style="margin-top:8px"><button class="ghost sm" data-act="resolve" data-id="${r.id}">Mark resolved</button>${r.reported_id ? `<button class="btn sm" data-act="suspend" data-id="${r.reported_id}" data-val="true">Suspend person</button>` : ''}</div></div>`).join('');
-  const dels = adm.dels.map(d => `<div class="card row"><div class="grow"><b>${esc(d.full_name)}</b> ${tel(d.phone)}<div class="m">${esc(d.role)} · requested ${day(d.deletion_requested_at)}</div></div><button class="ghost sm" data-act="erase" data-id="${d.id}">Erase now</button></div>`).join('');
-  view.innerHTML = `<h1>Admin</h1>
-  <div class="stats"><div class="card"><b>${adm.reqs.length}</b><span class="m">Requests</span></div>
-  <div class="card"><b>${n(r => r.status === 'needs_clarification')}</b><span class="m">Need details</span></div>
-  <div class="card"><b>${n(r => r.status === 'submitted')}</b><span class="m">Waiting for a match</span></div>
-  <div class="card"><b>${n(r => ['pending','accepted','booked','awaiting_confirmation'].includes(r.status))}</b><span class="m">With providers</span></div>
-  <div class="card"><b>${n(r => r.status === 'completed')}</b><span class="m">Completed</span></div>
-  <div class="card"><b>${adm.reps.length}</b><span class="m">Open reports</span></div></div>
-  <div class="toolbar" role="search">
-    <input id="q" type="search" placeholder="Search name, area or service" aria-label="Search requests" value="${esc(q)}">
-    <select id="flt" aria-label="Filter by status"><option value="all">All statuses</option>${Object.keys(ST).map(s => `<option value="${s}"${s === filter ? ' selected' : ''}>${ST[s][0]}</option>`).join('')}</select>
-    <select id="cat" aria-label="Filter by service"><option value="all">All services</option>${TRADES.map(t => `<option value="${esc(t)}"${t === catF ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select>
-    <button class="toolbtn" data-act="reset">Reset filters</button>
-    <span class="seg"><button data-act="layout" data-val="list" class="${layout === 'list' ? 'on' : ''}">List</button><button data-act="layout" data-val="grid" class="${layout === 'grid' ? 'on' : ''}">Cards</button></span>
-    <button class="toolbtn" data-act="csv">Download CSV</button>
-  </div>
-  <div id="results"></div>
-  ${adm.reps.length ? `<h2>Reports</h2><div class="list">${reps}</div>` : ''}
-  ${adm.dels.length ? `<h2>Deletion requests</h2><div class="list">${dels}</div>` : ''}
-  <h2>Providers</h2><div class="list">${provs || '<p class="m">No providers yet.</p>'}</div>`;
-  $('#q').oninput = e => { q = e.target.value; drawResults(); };
-  $('#flt').onchange = e => { filter = e.target.value; drawResults(); };
-  $('#cat').onchange = e => { catF = e.target.value; drawResults(); };
-  drawResults();
-}
-function assignCtl(r, ok) {
-  const pool = ok.filter(p => p.trade === r.category), list = pool.length ? pool : ok;
-  return `<select id="as-${r.id}" aria-label="Provider"><option value="">Choose provider</option>${list.map(p => `<option value="${p.user_id}"${p.user_id === r.artisan_id ? ' selected' : ''}>${esc(p.p?.full_name)} (${esc(p.trade)})</option>`).join('')}</select><button class="ghost sm" style="margin-top:6px" data-act="assign" data-id="${r.id}">Assign</button>`;
-}
-function statusCtl(r) {
-  return `<select id="st-${r.id}" aria-label="Status">${Object.keys(ST).map(s => `<option value="${s}"${s === r.status ? ' selected' : ''}>${ST[s][0]}</option>`).join('')}</select><button class="ghost sm" style="margin-top:6px" data-act="setstatus" data-id="${r.id}">Set status</button>`;
-}
-function drawResults() {
-  const ok = adm.pros.filter(p => p.verification_status === 'approved' && !p.p?.is_suspended);
-  const s = q.trim().toLowerCase();
-  const shown = adm.reqs.filter(r => (filter === 'all' || r.status === filter) && (catF === 'all' || r.category === catF) && (!s || [r.customer?.full_name, r.area, r.category, r.description].join(' ').toLowerCase().includes(s)));
-  const box = $('#results');
-  if (!shown.length) { box.innerHTML = '<div class="card"><p class="m">No requests match these filters.</p></div>'; return; }
-  if (layout === 'grid') {
-    box.innerHTML = `<div class="gridv">${shown.map(r => `<div class="card"><div class="row"><b class="grow">${esc(r.category)}</b>${tag(r.status)}</div><div class="m">${day(r.created_at)} · ${esc(r.area) || 'No area yet'}</div><p style="margin:6px 0"><b>${esc(r.customer?.full_name || '')}</b> ${tel(r.customer?.phone)}</p>${detailsHtml(r)}${assignCtl(r, ok)}<div style="margin-top:8px">${statusCtl(r)}</div></div>`).join('')}</div>`;
+/* ---------- My Requests tab ---------- */
+function myRequestsView() {
+  view.innerHTML = `<h1>My Requests</h1><div id="mine" class="list"></div>`;
+  const box = $('#mine');
+  if (!myRequests.length) {
+    box.innerHTML = '<p class="m">No requests yet. Submit your first request using the "Request Service" tab above.</p>';
     return;
   }
-  box.innerHTML = `<div class="card tw"><table><tr><th>Date</th><th>Service</th><th>Customer</th><th>Status</th><th>Provider</th><th>Change status</th></tr>${shown.map(r => `<tr><td>${day(r.created_at)}</td><td>${esc(r.category)}${detailsHtml(r)}</td>
-    <td><b>${esc(r.customer?.full_name || '')}</b><div class="m">${esc(r.area) || 'No area yet'} ${tel(r.customer?.phone)}</div></td><td>${tag(r.status)}</td><td>${assignCtl(r, ok)}</td><td>${statusCtl(r)}</td></tr>`).join('')}</table></div>`;
+  box.innerHTML = myRequests.map(r => `
+    <div class="card">
+      <div class="row"><b class="grow">${esc(r.category)}</b>${tag(r.status)}</div>
+      <div class="m">${day(r.created_at)} · ${esc(r.area)}</div>
+      <p style="margin:8px 0">${esc(r.description)}</p>
+      <p class="m">Assigned Provider: <b>${esc(r.artisan)}</b></p>
+    </div>
+  `).join('');
 }
 
-/* ---------- Actions ---------- */
-const rpc = async (fn, args) => { const { error } = await sb.rpc(fn, args); if (error) throw error; };
+/* ---------- Provider Portal tab ---------- */
+function providerView() {
+  view.innerHTML = `
+    <h1>Provider Portal</h1>
+    <p class="m">View live incoming job requests in your service area.</p>
+    <div class="card" style="margin-top:14px">
+      <h3>Active Jobs in Market</h3>
+      <div class="list">
+        ${myRequests.length === 0 ? '<p class="m">No active job requests available right now.</p>' : myRequests.map(r => `
+          <div class="card" style="background:#f8fafc">
+            <div class="row"><b class="grow">${esc(r.category)}</b>${tag(r.status)}</div>
+            <p class="m">${esc(r.area)} · ${day(r.created_at)}</p>
+            <p style="margin:6px 0">${esc(r.description)}</p>
+            <button class="btn sm" onclick="alert('Accepted job interest!')">Express Interest</button>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+/* ---------- Event Listeners ---------- */
 const actions = {
-  status: async (id, val) => { await rpc('set_request_status', { p_id: id, p_status: val }); flash('Updated.'); go(tab); },
-  assign: async id => { const v = $('#as-' + id).value; if (!v) throw new Error('Choose a provider first.'); await rpc('admin_assign', { p_id: id, p_artisan: v }); flash('Provider assigned.'); go(tab); },
-  setstatus: async id => { await rpc('set_request_status', { p_id: id, p_status: $('#st-' + id).value }); flash('Status updated.'); go(tab); },
-  verify: async (id, val) => { await rpc('admin_set_verification', { p_user: id, p_status: val }); flash('Provider ' + val + '.'); go(tab); },
-  reset: async () => { q = ''; filter = 'all'; catF = 'all'; $('#q').value = ''; $('#flt').value = 'all'; $('#cat').value = 'all'; drawResults(); },
-  layout: async (id, val) => { layout = val; document.querySelectorAll('.seg button').forEach(x => x.classList.toggle('on', x.dataset.val === val)); drawResults(); },
-  report: async (id, val) => { const reason = prompt('What went wrong? Please describe it in a few words (max 500 characters).'); if (!reason || reason.trim().length < 3) return; const { error } = await sb.from('reports').insert({ request_id: id, reported_id: val, reason: reason.trim().slice(0, 500) }); if (error) throw error; flash('Thank you. Platter will look into this.'); },
-  resolve: async id => { await rpc('admin_resolve_report', { p_id: id }); flash('Report resolved.'); go(tab); },
-  suspend: async (id, val) => { const on = val === 'true'; if (on && !confirm('Suspend this person? They will not be able to use Platter.')) return; await rpc('admin_suspend', { p_user: id, p_suspend: on }); flash(on ? 'Person suspended.' : 'Person reinstated.'); go(tab); },
-  deleteme: async () => { if (!confirm('Ask Platter to delete your account and information?')) return; await rpc('request_account_deletion', {}); me.deletion_requested_at = new Date().toISOString(); flash('Request sent. Platter will delete your information.'); go(tab); },
-  erase: async id => { if (!confirm('Erase this person and their requests? This cannot be undone.')) return; await rpc('admin_erase_user', { p_user: id }); flash('Person erased.'); go(tab); },
-  mkprov: async () => { const { error } = await sb.from('artisan_profiles').insert({ user_id: me.id }); if (error) throw error; go(tab); },
-  projflt: async (id, val) => { projFilter = val; discoverView(); },
+  projflt: async (id, dataset) => { projFilter = dataset.val; discoverView(); },
   reqproj: async (id, dataset) => {
     prefillCategory = dataset.cat;
     prefillArtisan = dataset.art;
-    if (!me) return authView('login');
     go('customer');
   },
-  clearartisan: async () => { prefillArtisan = ''; customerView(); },
-  csv: async () => {
-    const q = s => `"${String(s ?? '').replace(/"/g, '""')}"`;
-    const lines = [['Date','Service','Customer','Phone','Area','Status','Provider','Description'].join(',')].concat((window._reqs || []).map(r => [r.created_at, r.category, r.customer?.full_name, r.customer?.phone, r.area, r.status, r.artisan?.full_name, r.description].map(q).join(',')));
-    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([lines.join('\n')], { type: 'text/csv' })); a.download = 'platter_requests.csv'; a.click();
-  }
+  clearartisan: async () => { prefillArtisan = ''; customerView(); }
 };
 
-document.addEventListener('click', async e => {
+document.addEventListener('click', e => {
   const b = e.target.closest('[data-go],[data-act]'); if (!b) return;
-  if (b.dataset.go) return ['login','signup'].includes(b.dataset.go) ? authView(b.dataset.go) : go(b.dataset.go);
-  b.disabled = true;
-  try { await actions[b.dataset.act](b.dataset.id, b.dataset); } catch (err) { flash(err.message || 'Something went wrong.', true); }
-  b.disabled = false;
+  if (b.dataset.go) return go(b.dataset.go);
+  if (actions[b.dataset.act]) actions[b.dataset.act](b.dataset.id, b.dataset);
 });
 
-document.addEventListener('submit', async e => {
-  const f = e.target; if (!f.dataset.edit) return; e.preventDefault(); const d = new FormData(f);
-  const { error } = await sb.rpc('update_my_request', { p_id: f.dataset.edit, p_description: d.get('description').trim(), p_area: d.get('area').trim(), p_date: d.get('preferred_date') || null });
-  if (error) return flash(error.message, true);
-  flash('Details saved.'); go(tab);
-});
+boot();
 </script>
 </body>
 </html>
