@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Platter — Pilot v0.4</title>
+    <title>Platter — Visual Artisan Discovery & Service Marketplace</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -27,139 +27,139 @@
     </script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Firebase JS SDK -->
+    <!-- Firebase / Supabase SDK Sync -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 </head>
-<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col font-sans selection:bg-teal-500 selection:text-white pb-12">
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col font-sans pb-20 md:pb-8">
 
-    <!-- TOP HEADER -->
+    <!-- TOP NAV HEADER -->
     <header class="bg-teal-900 text-white shadow-md sticky top-0 z-40">
-        <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="flex items-center space-x-2">
+        <div class="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2 cursor-pointer" onclick="switchMainTab('discover')">
                 <div class="w-8 h-8 rounded-lg bg-teal-500 flex items-center justify-center font-black text-teal-900 text-lg shadow-inner">P</div>
-                <span class="font-bold text-xl tracking-wide text-teal-50">Platter</span>
-                <span class="text-xs bg-teal-800 text-teal-200 px-2 py-0.5 rounded-full font-medium border border-teal-700">Pilot v0.4</span>
+                <div>
+                    <span class="font-bold text-xl tracking-wide text-teal-50">Platter</span>
+                    <span class="text-[10px] bg-teal-800 text-teal-200 px-2 py-0.5 rounded-full border border-teal-700 ml-1">v0.5 Pilot</span>
+                </div>
             </div>
             
-            <div id="roleHeaderBadge" class="hidden items-center space-x-2">
+            <!-- DESKTOP NAVIGATION LINKS -->
+            <nav class="hidden md:flex items-center space-x-6 text-sm font-semibold">
+                <button onclick="switchMainTab('discover')" class="nav-desktop-btn hover:text-teal-300 transition text-teal-300" id="deskNavDiscover">Discover Projects</button>
+                <button onclick="switchMainTab('artisans')" class="nav-desktop-btn hover:text-teal-300 transition text-slate-300" id="deskNavArtisans">Artisans</button>
+                <button onclick="switchMainTab('request')" class="nav-desktop-btn bg-teal-600 hover:bg-teal-500 text-white px-3.5 py-1.5 rounded-lg transition shadow" id="deskNavRequest">Request Service</button>
+                <button onclick="switchMainTab('requests')" class="nav-desktop-btn hover:text-teal-300 transition text-slate-300" id="deskNavRequests">My Requests</button>
+            </nav>
+
+            <!-- ROLE & ADMIN LOGOUT BUTTON -->
+            <div id="roleHeaderBadge" class="flex items-center space-x-2">
                 <span id="currentRoleLabel" class="text-xs bg-teal-800 text-teal-100 font-semibold px-2.5 py-1 rounded-full border border-teal-600 flex items-center gap-1">
-                    <!-- Icon + Role -->
+                    <i class="fa-solid fa-compass text-teal-300"></i> Visitor
                 </span>
-                <button onclick="switchRole()" class="text-xs bg-teal-700 hover:bg-teal-600 text-white px-2.5 py-1 rounded-md transition font-medium flex items-center gap-1 shadow-sm">
-                    <i class="fa-solid fa-right-from-bracket"></i> Exit Portal
+                <button onclick="openAdminAuthModal()" class="text-xs bg-teal-800 hover:bg-teal-700 text-teal-200 px-2.5 py-1 rounded-md transition font-medium flex items-center gap-1 border border-teal-700">
+                    <i class="fa-solid fa-lock text-[10px]"></i> Admin
                 </button>
             </div>
         </div>
     </header>
 
-    <!-- MAIN CONTAINER -->
-    <main id="appContainer" class="max-w-4xl mx-auto w-full px-4 pt-6 flex-1">
-        
+    <!-- MAIN APP BODY -->
+    <main class="max-w-5xl mx-auto w-full px-4 pt-6 flex-1">
+
         <!-- ================================================================= -->
-        <!-- VIEW 0: PORTAL SELECTION SCREEN (CUSTOMER & ARTISAN ONLY)         -->
+        <!-- SECTION 1: DISCOVER FEED (BEHANCE-STYLE COMPLETED PROJECTS)       -->
         <!-- ================================================================= -->
-        <section id="viewPortalSelect" class="py-8 max-w-lg mx-auto">
-            <div class="text-center mb-8">
-                <div class="inline-flex p-3 rounded-2xl bg-teal-100 text-teal-700 mb-3 shadow-inner">
-                    <i class="fa-solid fa-handshake text-3xl"></i>
+        <section id="secDiscover" class="space-y-6">
+            <div class="bg-gradient-to-r from-teal-900 to-teal-800 text-white p-6 rounded-2xl shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div class="space-y-1 max-w-xl">
+                    <span class="text-xs font-bold uppercase tracking-wider text-teal-300 bg-teal-950/50 px-2.5 py-1 rounded-full">Portfolio Showcase</span>
+                    <h1 class="text-2xl md:text-3xl font-extrabold text-teal-50">Discover Real Work by Ghana's Skilled Artisans</h1>
+                    <p class="text-xs md:text-sm text-teal-100">Explore verified completed projects in tiling, kitchen cabinets, doors, and carpentry before hiring.</p>
                 </div>
-                <h1 class="text-2xl font-bold text-slate-900">Welcome to Platter</h1>
-                <p class="text-slate-600 text-sm mt-1">Select your portal to enter the application.</p>
-            </div>
-
-            <div class="grid grid-cols-1 gap-4">
-                <!-- CUSTOMER PORTAL CARD -->
-                <button onclick="selectPortal('customer')" class="bg-white border-2 border-slate-200 hover:border-teal-500 rounded-xl p-5 text-left transition shadow-sm hover:shadow-md group flex items-center space-x-4">
-                    <div class="w-12 h-12 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center text-xl group-hover:bg-teal-600 group-hover:text-white transition">
-                        <i class="fa-solid fa-user text-2xl"></i>
-                    </div>
-                    <div class="flex-1">
-                        <h3 class="font-bold text-slate-800 text-base group-hover:text-teal-700">Customer Portal</h3>
-                        <p class="text-slate-500 text-xs">Request home services and track your jobs</p>
-                    </div>
-                    <i class="fa-solid fa-chevron-right text-slate-300 group-hover:text-teal-500"></i>
-                </button>
-
-                <!-- ARTISAN PORTAL CARD -->
-                <button onclick="selectPortal('artisan')" class="bg-white border-2 border-slate-200 hover:border-teal-500 rounded-xl p-5 text-left transition shadow-sm hover:shadow-md group flex items-center space-x-4">
-                    <div class="w-12 h-12 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center text-xl group-hover:bg-teal-600 group-hover:text-white transition">
-                        <i class="fa-solid fa-screwdriver-wrench text-2xl"></i>
-                    </div>
-                    <div class="flex-1">
-                        <h3 class="font-bold text-slate-800 text-base group-hover:text-teal-700">Artisan / Provider Portal</h3>
-                        <p class="text-slate-500 text-xs">Find job opportunities, accept requests & offer quotes</p>
-                    </div>
-                    <i class="fa-solid fa-chevron-right text-slate-300 group-hover:text-teal-500"></i>
+                <button onclick="switchMainTab('request')" class="self-start md:self-center bg-teal-500 hover:bg-teal-400 text-teal-950 font-bold px-5 py-3 rounded-xl transition shadow-lg flex items-center gap-2 whitespace-nowrap">
+                    <i class="fa-solid fa-plus-circle"></i> Post Job Request
                 </button>
             </div>
 
-            <!-- HIDDEN ADMIN ENTRY LINK -->
-            <div class="mt-12 text-center">
-                <button onclick="openAdminAuthModal()" class="text-xs text-slate-400 hover:text-slate-600 transition flex items-center justify-center mx-auto gap-1">
-                    <i class="fa-solid fa-lock text-[10px]"></i> Platter Admin Gateway
-                </button>
+            <!-- TRADE CATEGORY FILTERS -->
+            <div class="flex items-center space-x-2 overflow-x-auto pb-2 scrollbar-none text-xs font-semibold">
+                <button onclick="filterProjects('all')" class="project-filter-btn px-4 py-2 rounded-full bg-teal-600 text-white shadow-sm border border-teal-600">All Trades</button>
+                <button onclick="filterProjects('Tiling')" class="project-filter-btn px-4 py-2 rounded-full bg-white text-slate-700 border border-slate-200 hover:border-teal-500">Bathroom & Floor Tiling</button>
+                <button onclick="filterProjects('Cabinets')" class="project-filter-btn px-4 py-2 rounded-full bg-white text-slate-700 border border-slate-200 hover:border-teal-500">Kitchen Cabinets</button>
+                <button onclick="filterProjects('Doors')" class="project-filter-btn px-4 py-2 rounded-full bg-white text-slate-700 border border-slate-200 hover:border-teal-500">Door Installation</button>
+                <button onclick="filterProjects('Carpentry')" class="project-filter-btn px-4 py-2 rounded-full bg-white text-slate-700 border border-slate-200 hover:border-teal-500">Custom Carpentry</button>
+                <button onclick="filterProjects('Plumbing')" class="project-filter-btn px-4 py-2 rounded-full bg-white text-slate-700 border border-slate-200 hover:border-teal-500">Plumbing</button>
+            </div>
+
+            <!-- BEHANCE-STYLE PROJECT GRID -->
+            <div id="projectsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Projects populated dynamically -->
             </div>
         </section>
 
         <!-- ================================================================= -->
-        <!-- VIEW 1: CUSTOMER VIEW                                            -->
+        <!-- SECTION 2: ARTISAN DIRECTORY & PROFILES                           -->
         <!-- ================================================================= -->
-        <section id="viewCustomer" class="hidden space-y-6">
-            <!-- TABS -->
-            <div class="flex border-b border-slate-200">
-                <button id="tabCustomerNew" onclick="switchCustomerTab('new')" class="py-2.5 px-4 font-semibold text-sm border-b-2 border-teal-600 text-teal-700">
-                    <i class="fa-solid fa-plus-circle mr-1"></i> Request a Service
-                </button>
-                <button id="tabCustomerMine" onclick="switchCustomerTab('mine')" class="py-2.5 px-4 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-700">
-                    <i class="fa-solid fa-list-check mr-1"></i> My Requests (<span id="myRequestsCount">0</span>)
-                </button>
+        <section id="secArtisans" class="hidden space-y-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-900">Verified Artisan Directory</h2>
+                    <p class="text-xs text-slate-500">Find experienced, vetted local service providers in your neighborhood.</p>
+                </div>
             </div>
 
-            <!-- SUB-TAB 1: REQUEST FORM -->
-            <div id="subCustomerNew" class="space-y-4 max-w-xl mx-auto bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+            <div id="artisansList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Artisans populated dynamically -->
+            </div>
+        </section>
+
+        <!-- ================================================================= -->
+        <!-- SECTION 3: SERVICE REQUEST FORM                                   -->
+        <!-- ================================================================= -->
+        <section id="secRequest" class="hidden max-w-xl mx-auto space-y-4">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
                 <div>
-                    <h2 class="text-lg font-bold text-slate-900">Need a Home Service?</h2>
-                    <p class="text-xs text-slate-500">Select a category and tell us what you need fixed.</p>
+                    <span class="text-xs font-bold text-teal-600 uppercase tracking-wider">Service Marketplace</span>
+                    <h2 class="text-xl font-bold text-slate-900">Submit a Service Request</h2>
+                    <p class="text-xs text-slate-500 mt-1">Tell us what you need done. Choose a specific artisan or let Platter match you with the best available provider.</p>
                 </div>
 
-                <form id="requestForm" onsubmit="handleRequestSubmit(event)" class="space-y-4">
+                <form id="serviceRequestForm" onsubmit="handleRequestSubmit(event)" class="space-y-4">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Service Category</label>
-                        <div class="grid grid-cols-2 gap-2" id="categoryOptions">
-                            <button type="button" onclick="selectCategory('Plumbing')" class="cat-btn border-2 border-slate-200 rounded-xl p-3 text-left hover:border-teal-500 focus:outline-none flex items-center space-x-2">
-                                <i class="fa-solid fa-wrench text-teal-600 text-lg"></i>
-                                <span class="text-xs font-semibold text-slate-800">Plumbing</span>
-                            </button>
-                            <button type="button" onclick="selectCategory('Electrical')" class="cat-btn border-2 border-slate-200 rounded-xl p-3 text-left hover:border-teal-500 focus:outline-none flex items-center space-x-2">
-                                <i class="fa-solid fa-bolt text-teal-600 text-lg"></i>
-                                <span class="text-xs font-semibold text-slate-800">Electrical</span>
-                            </button>
-                            <button type="button" onclick="selectCategory('Carpentry')" class="cat-btn border-2 border-slate-200 rounded-xl p-3 text-left hover:border-teal-500 focus:outline-none flex items-center space-x-2">
-                                <i class="fa-solid fa-hammer text-teal-600 text-lg"></i>
-                                <span class="text-xs font-semibold text-slate-800">Carpentry</span>
-                            </button>
-                            <button type="button" onclick="selectCategory('Cleaning')" class="cat-btn border-2 border-slate-200 rounded-xl p-3 text-left hover:border-teal-500 focus:outline-none flex items-center space-x-2">
-                                <i class="fa-solid fa-broom text-teal-600 text-lg"></i>
-                                <span class="text-xs font-semibold text-slate-800">Cleaning</span>
-                            </button>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Selected Service Trade</label>
+                        <select id="reqCategory" required class="w-full text-sm border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-teal-500 outline-none bg-slate-50 font-medium">
+                            <option value="">Select a Trade Category...</option>
+                            <option value="Bathroom Tiling">Bathroom & Floor Tiling</option>
+                            <option value="Kitchen Cabinet Installation">Kitchen Cabinet Installation</option>
+                            <option value="Door Installation">Door & Lock Installation</option>
+                            <option value="Custom Carpentry">Custom Carpentry & Woodwork</option>
+                            <option value="Plumbing">Plumbing Services</option>
+                            <option value="Electrical">Electrical Installations</option>
+                        </select>
+                    </div>
+
+                    <div id="preferredArtisanBanner" class="hidden bg-teal-50 border border-teal-200 rounded-xl p-3 text-xs text-teal-800 flex items-center justify-between">
+                        <div>
+                            <span class="font-bold">Target Artisan:</span> <span id="preferredArtisanName">Kwame Mensah</span>
                         </div>
-                        <input type="hidden" id="selectedCategory" required>
+                        <button type="button" onclick="clearPreferredArtisan()" class="text-rose-600 font-bold hover:underline">Remove</button>
                     </div>
 
                     <div>
-                        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Job Description</label>
-                        <textarea id="jobDescription" rows="3" required placeholder="Describe what needs to be done..." class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"></textarea>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Scope & Description</label>
+                        <textarea id="reqDescription" rows="3" required placeholder="Provide details (e.g. tile dimensions, materials purchased, urgency)..." class="w-full text-sm border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-teal-500 outline-none"></textarea>
                     </div>
 
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Neighborhood / Area</label>
-                        <input type="text" id="jobNeighborhood" required placeholder="e.g. East Legon, Osu, Cantonments" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none">
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Contact Phone Number</label>
-                        <input type="tel" id="jobContact" required placeholder="024 XXX XXXX" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Neighborhood / Area</label>
+                            <input type="text" id="reqArea" required placeholder="e.g. East Legon, Spintex, Osu" class="w-full text-sm border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-teal-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Contact Phone</label>
+                            <input type="tel" id="reqPhone" required placeholder="024 XXX XXXX" class="w-full text-sm border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-teal-500 outline-none">
+                        </div>
                     </div>
 
                     <button type="submit" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-4 rounded-xl shadow-md transition flex items-center justify-center space-x-2">
@@ -168,124 +168,79 @@
                     </button>
                 </form>
             </div>
+        </section>
 
-            <!-- SUB-TAB 2: MY REQUESTS -->
-            <div id="subCustomerMine" class="hidden space-y-4">
-                <h2 class="text-lg font-bold text-slate-900">Your Submitted Requests</h2>
-                <div id="myRequestsList" class="space-y-3">
-                    <!-- Populated dynamically -->
-                </div>
+        <!-- ================================================================= -->
+        <!-- SECTION 4: MY REQUESTS & TRACKING                                 -->
+        <!-- ================================================================= -->
+        <section id="secRequests" class="hidden space-y-4">
+            <div class="flex justify-between items-center">
+                <h2 class="text-xl font-bold text-slate-900">Your Submitted Requests</h2>
+                <span class="text-xs bg-slate-200 text-slate-700 font-bold px-2.5 py-1 rounded-full"><span id="myReqCount">0</span> Active</span>
+            </div>
+
+            <div id="myRequestsList" class="space-y-3">
+                <!-- User requests populated dynamically -->
             </div>
         </section>
 
         <!-- ================================================================= -->
-        <!-- VIEW 2: ARTISAN / PROVIDER VIEW                                   -->
+        <!-- SECTION 5: ADMIN OPERATIONS CONTROL                               -->
         <!-- ================================================================= -->
-        <section id="viewArtisan" class="hidden space-y-6">
-            <div class="bg-teal-800 text-white p-4 rounded-2xl flex justify-between items-center shadow-sm">
+        <section id="secAdmin" class="hidden space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900 text-white p-5 rounded-2xl">
                 <div>
-                    <h2 class="font-bold text-lg">Provider Dashboard</h2>
-                    <p class="text-xs text-teal-200">View local requests matching your service area.</p>
+                    <h2 class="text-lg font-bold">Platter Operations Dashboard</h2>
+                    <p class="text-xs text-slate-400">Review job lifecycle stage, verify artisans & export platform metrics.</p>
                 </div>
-                <div class="text-right">
-                    <span class="text-xs bg-teal-700 text-teal-100 px-2.5 py-1 rounded-full font-semibold border border-teal-600">
-                        <i class="fa-solid fa-circle-check text-teal-300"></i> Verified
-                    </span>
-                </div>
-            </div>
-
-            <!-- TAB TOGGLE -->
-            <div class="flex border-b border-slate-200">
-                <button id="tabArtisanMarket" onclick="switchArtisanTab('market')" class="py-2.5 px-4 font-semibold text-sm border-b-2 border-teal-600 text-teal-700">
-                    <i class="fa-solid fa-briefcase mr-1"></i> Available Jobs
-                </button>
-                <button id="tabArtisanProfile" onclick="switchArtisanTab('profile')" class="py-2.5 px-4 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-700">
-                    <i class="fa-solid fa-id-card mr-1"></i> My Profile & Reviews
+                <button onclick="exportCSV()" class="bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-file-csv"></i> Export CSV Report
                 </button>
             </div>
 
-            <!-- MARKETPLACE -->
-            <div id="subArtisanMarket" class="space-y-3">
-                <div id="artisanJobsList" class="space-y-3">
-                    <!-- Populated dynamically -->
-                </div>
-            </div>
-
-            <!-- ARTISAN PROFILE -->
-            <div id="subArtisanProfile" class="hidden space-y-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm max-w-lg">
-                <div class="flex items-center space-x-4">
-                    <div class="w-16 h-16 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center font-bold text-2xl border-2 border-teal-500">
-                        KW
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-slate-900 text-lg">Kwame Mensah</h3>
-                        <p class="text-xs text-slate-500">Plumbing & Electrical Specialist</p>
-                        <div class="flex items-center text-amber-500 text-xs mt-1">
-                            <i class="fa-solid fa-star"></i>
-                            <i class="fa-solid fa-star"></i>
-                            <i class="fa-solid fa-star"></i>
-                            <i class="fa-solid fa-star"></i>
-                            <i class="fa-solid fa-star-half-stroke"></i>
-                            <span class="ml-1 text-slate-600 font-semibold">4.8 (12 reviews)</span>
-                        </div>
-                    </div>
-                </div>
-
-                <hr class="border-slate-100">
-
-                <div class="space-y-2 text-xs text-slate-600">
-                    <div><span class="font-semibold text-slate-800">Service Neighborhoods:</span> East Legon, Spintex, Osu, Airport</div>
-                    <div><span class="font-semibold text-slate-800">Experience:</span> 6+ Years</div>
-                    <div><span class="font-semibold text-slate-800">Verification Status:</span> <span class="text-teal-700 font-bold">Verified by Platter Admin</span></div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ================================================================= -->
-        <!-- VIEW 3: ADMIN VIEW                                                -->
-        <!-- ================================================================= -->
-        <section id="viewAdmin" class="hidden space-y-6">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-slate-900 text-white p-4 rounded-2xl">
-                <div>
-                    <h2 class="text-lg font-bold">Platter Admin Control Center</h2>
-                    <p class="text-xs text-slate-400">Manage all customer requests, update pipeline stages & export data.</p>
-                </div>
-                <button onclick="exportCSV()" class="bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold px-3 py-2 rounded-lg transition flex items-center justify-center space-x-1.5 shadow">
-                    <i class="fa-solid fa-file-csv text-sm"></i>
-                    <span>Export CSV</span>
-                </button>
-            </div>
-
-            <!-- METRICS CARDS -->
+            <!-- METRIC CARDS -->
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                     <div class="text-slate-500 text-xs font-semibold">Total Requests</div>
-                    <div id="metricTotal" class="text-xl font-black text-slate-800 mt-0.5">0</div>
+                    <div id="admTotal" class="text-2xl font-black text-slate-800 mt-0.5">0</div>
                 </div>
-                <div class="bg-amber-50 p-3.5 rounded-xl border border-amber-200 shadow-sm">
+                <div class="bg-amber-50 p-4 rounded-xl border border-amber-200 shadow-sm">
                     <div class="text-amber-700 text-xs font-semibold">Needs Clarification</div>
-                    <div id="metricClarify" class="text-xl font-black text-amber-800 mt-0.5">0</div>
+                    <div id="admClarify" class="text-2xl font-black text-amber-800 mt-0.5">0</div>
                 </div>
-                <div class="bg-blue-50 p-3.5 rounded-xl border border-blue-200 shadow-sm">
+                <div class="bg-blue-50 p-4 rounded-xl border border-blue-200 shadow-sm">
                     <div class="text-blue-700 text-xs font-semibold">Matching</div>
-                    <div id="metricMatching" class="text-xl font-black text-blue-800 mt-0.5">0</div>
+                    <div id="admMatching" class="text-2xl font-black text-blue-800 mt-0.5">0</div>
                 </div>
-                <div class="bg-emerald-50 p-3.5 rounded-xl border border-emerald-200 shadow-sm">
+                <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-200 shadow-sm">
                     <div class="text-emerald-700 text-xs font-semibold">Completed</div>
-                    <div id="metricCompleted" class="text-xl font-black text-emerald-800 mt-0.5">0</div>
+                    <div id="admCompleted" class="text-2xl font-black text-emerald-800 mt-0.5">0</div>
                 </div>
             </div>
 
-            <!-- ADMIN REQUEST LIST -->
-            <div class="space-y-3">
-                <h3 class="font-bold text-slate-800 text-sm">Live Request Management Pipeline</h3>
-                <div id="adminRequestsList" class="space-y-3">
-                    <!-- Populated dynamically -->
-                </div>
+            <!-- ADMIN PIPELINE LIST -->
+            <div id="adminRequestsList" class="space-y-3">
+                <!-- Admin view populated dynamically -->
             </div>
         </section>
 
     </main>
+
+    <!-- MOBILE BOTTOM NAVIGATION BAR -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 py-2 px-4 md:hidden flex justify-around items-center z-40 text-slate-500 text-[10px] font-semibold">
+        <button onclick="switchMainTab('discover')" id="mobNavDiscover" class="flex flex-col items-center text-teal-600">
+            <i class="fa-solid fa-compass text-base mb-0.5"></i> Discover
+        </button>
+        <button onclick="switchMainTab('artisans')" id="mobNavArtisans" class="flex flex-col items-center">
+            <i class="fa-solid fa-user-group text-base mb-0.5"></i> Artisans
+        </button>
+        <button onclick="switchMainTab('request')" id="mobNavRequest" class="flex flex-col items-center">
+            <i class="fa-solid fa-circle-plus text-base mb-0.5 text-teal-600"></i> Request
+        </button>
+        <button onclick="switchMainTab('requests')" id="mobNavRequests" class="flex flex-col items-center">
+            <i class="fa-solid fa-list-check text-base mb-0.5"></i> My Jobs
+        </button>
+    </div>
 
     <!-- ADMIN PASSCODE MODAL -->
     <div id="adminAuthModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
@@ -294,8 +249,8 @@
                 <div class="w-10 h-10 rounded-full bg-slate-100 text-slate-700 mx-auto flex items-center justify-center mb-2">
                     <i class="fa-solid fa-lock text-lg"></i>
                 </div>
-                <h3 class="font-bold text-slate-900">Admin Passcode Required</h3>
-                <p class="text-xs text-slate-500 mt-0.5">Enter passcode to access control center</p>
+                <h3 class="font-bold text-slate-900">Admin Gateway</h3>
+                <p class="text-xs text-slate-500 mt-0.5">Enter admin passcode to unlock operational controls</p>
             </div>
             
             <input type="password" id="adminPasscode" placeholder="Enter passcode" class="w-full text-center text-sm font-bold border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-teal-500 outline-none">
@@ -308,9 +263,9 @@
         </div>
     </div>
 
-    <!-- JAVASCRIPT APP LOGIC -->
+    <!-- APPLICATION LOGIC -->
     <script>
-        // FIREBASE INITIALIZATION
+        // FIREBASE / SUPABASE SYNC BACKEND
         const firebaseConfig = {
             apiKey: "AIzaSyDummyKeyForPlatterPilotTestingOnly",
             authDomain: "platter-pilot.firebaseapp.com",
@@ -321,281 +276,245 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        db.enablePersistence({synchronizeTabs:true}).catch(() => {});
 
-        // STATE MANAGEMENT
-        let currentRole = null; 
+        // SAMPLE COMPLETED PROJECTS FOR BEHANCE DISCOVER FEED
+        const SAMPLE_PROJECTS = [
+            {
+                id: 'p1',
+                title: 'Modern Italian Porcelain Bathroom Tiling',
+                trade: 'Tiling',
+                category: 'Bathroom Tiling',
+                artisanName: 'Kwame Mensah',
+                artisanRole: 'Master Tiler & Mason',
+                location: 'East Legon, Accra',
+                image: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=600&q=80',
+                description: 'Full wall-to-floor waterproofing and precision porcelain tile installation finished with epoxy grout.'
+            },
+            {
+                id: 'p2',
+                title: 'Custom Acrylic Kitchen Cabinetry',
+                trade: 'Cabinets',
+                category: 'Kitchen Cabinet Installation',
+                artisanName: 'Kofi Owusu',
+                artisanRole: 'Cabinet & Interior Woodwork Specialist',
+                location: 'Cantonments, Accra',
+                image: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=600&q=80',
+                description: 'Modular high-gloss kitchen island and soft-close cabinet assembly with concealed hinges.'
+            },
+            {
+                id: 'p3',
+                title: 'Solid Hardwood Security Front Door',
+                trade: 'Doors',
+                category: 'Door Installation',
+                artisanName: 'Emmanuel Addo',
+                artisanRole: 'Carpentry & Door Fitting Expert',
+                location: 'Airport Residential, Accra',
+                image: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=600&q=80',
+                description: 'Custom Odum hardwood main door alignment, weatherproofing, and smart lock installation.'
+            },
+            {
+                id: 'p4',
+                title: 'Polished Marble Living Room Floor',
+                trade: 'Tiling',
+                category: 'Bathroom Tiling',
+                artisanName: 'Kwame Mensah',
+                artisanRole: 'Master Tiler & Mason',
+                location: 'Osu, Accra',
+                image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80',
+                description: 'Large-format marble tile laying with seamless levelling across a 120 sqm living space.'
+            }
+        ];
+
+        // SAMPLE ARTISANS
+        const SAMPLE_ARTISANS = [
+            {
+                name: 'Kwame Mensah',
+                trade: 'Master Tiler & Mason',
+                area: 'East Legon, Osu, Cantonments',
+                experience: '8+ Years',
+                rating: '4.9 (18 jobs completed)',
+                verified: true,
+                avatar: 'KW'
+            },
+            {
+                name: 'Kofi Owusu',
+                trade: 'Cabinetry & Kitchen Fitting',
+                area: 'Spintex, Airport, Dzorwulu',
+                experience: '6 Years',
+                rating: '4.8 (14 jobs completed)',
+                verified: true,
+                avatar: 'KO'
+            },
+            {
+                name: 'Emmanuel Addo',
+                trade: 'Door Fitting & General Carpentry',
+                area: 'Tema, Sakumono, Lashibi',
+                experience: '10+ Years',
+                rating: '5.0 (22 jobs completed)',
+                verified: true,
+                avatar: 'EA'
+            }
+        ];
+
         let requestsData = [];
         let myCustomerId = localStorage.getItem('platter_customer_id') || 'cust_' + Math.random().toString(36).substr(2, 9);
         localStorage.setItem('platter_customer_id', myCustomerId);
-
-        // SEED DEMO DATA IF DB EMPTY
-        async function seedInitialDataIfNeeded() {
-            const snapshot = await db.collection("requests").get();
-            if (snapshot.empty) {
-                const sampleRequests = [
-                    {
-                        category: "Plumbing",
-                        description: "Leaking pipe under kitchen sink needs urgent repair",
-                        neighborhood: "East Legon",
-                        contact: "024 123 4567",
-                        customerId: "cust_demo_1",
-                        status: "needs_clarification",
-                        createdAt: firebase.firestore.Timestamp.now()
-                    },
-                    {
-                        category: "Electrical",
-                        description: "Fix tripping circuit breaker in main living area",
-                        neighborhood: "Osu",
-                        contact: "020 987 6543",
-                        customerId: myCustomerId,
-                        status: "matching",
-                        createdAt: firebase.firestore.Timestamp.now()
-                    }
-                ];
-                for (let req of sampleRequests) {
-                    await db.collection("requests").add(req);
-                }
-            }
-        }
-        seedInitialDataIfNeeded();
+        let selectedArtisan = null;
 
         // REALTIME LISTENER
         db.collection("requests").orderBy("createdAt", "desc").onSnapshot(snapshot => {
             requestsData = [];
-            snapshot.forEach(doc => {
-                requestsData.push({ id: doc.id, ...doc.data() });
-            });
-            renderAllViews();
+            snapshot.forEach(doc => requestsData.push({ id: doc.id, ...doc.data() }));
+            renderMyRequests();
+            renderAdminView();
         });
 
-        // PORTAL SELECTION LOGIC
-        function selectPortal(role) {
-            currentRole = role;
-            updateRoleHeaderUI();
-            
-            document.getElementById('viewPortalSelect').classList.add('hidden');
-            document.getElementById('viewCustomer').classList.add('hidden');
-            document.getElementById('viewArtisan').classList.add('hidden');
-            document.getElementById('viewAdmin').classList.add('hidden');
+        // NAVIGATION SWITCHER
+        function switchMainTab(tab) {
+            document.getElementById('secDiscover').classList.add('hidden');
+            document.getElementById('secArtisans').classList.add('hidden');
+            document.getElementById('secRequest').classList.add('hidden');
+            document.getElementById('secRequests').classList.add('hidden');
+            document.getElementById('secAdmin').classList.add('hidden');
 
-            if (role === 'customer') {
-                document.getElementById('viewCustomer').classList.remove('hidden');
-            } else if (role === 'artisan') {
-                document.getElementById('viewArtisan').classList.remove('hidden');
-            } else if (role === 'admin') {
-                document.getElementById('viewAdmin').classList.remove('hidden');
-            }
-            renderAllViews();
+            if (tab === 'discover') document.getElementById('secDiscover').classList.remove('hidden');
+            if (tab === 'artisans') document.getElementById('secArtisans').classList.remove('hidden');
+            if (tab === 'request') document.getElementById('secRequest').classList.remove('hidden');
+            if (tab === 'requests') document.getElementById('secRequests').classList.remove('hidden');
+            if (tab === 'admin') document.getElementById('secAdmin').classList.remove('hidden');
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        function switchRole() {
-            currentRole = null;
-            document.getElementById('roleHeaderBadge').classList.add('hidden');
-            document.getElementById('roleHeaderBadge').classList.remove('flex');
-            
-            document.getElementById('viewCustomer').classList.add('hidden');
-            document.getElementById('viewArtisan').classList.add('hidden');
-            document.getElementById('viewAdmin').classList.add('hidden');
-            document.getElementById('viewPortalSelect').classList.remove('hidden');
-        }
+        // RENDER DISCOVER PROJECTS
+        function renderDiscoverFeed(filter = 'all') {
+            const grid = document.getElementById('projectsGrid');
+            const filtered = filter === 'all' ? SAMPLE_PROJECTS : SAMPLE_PROJECTS.filter(p => p.trade === filter);
 
-        function updateRoleHeaderUI() {
-            const badge = document.getElementById('roleHeaderBadge');
-            const label = document.getElementById('currentRoleLabel');
-            badge.classList.remove('hidden');
-            badge.classList.add('flex');
-
-            if (currentRole === 'customer') {
-                label.innerHTML = `<i class="fa-solid fa-user text-xs"></i> Customer`;
-            } else if (currentRole === 'artisan') {
-                label.innerHTML = `<i class="fa-solid fa-screwdriver-wrench text-xs"></i> Artisan`;
-            } else if (currentRole === 'admin') {
-                label.innerHTML = `<i class="fa-solid fa-user-shield text-xs"></i> Admin`;
-            }
-        }
-
-        // HIDDEN ADMIN AUTH
-        function openAdminAuthModal() {
-            document.getElementById('adminPasscode').value = '';
-            document.getElementById('adminAuthError').classList.add('hidden');
-            document.getElementById('adminAuthModal').classList.remove('hidden');
-        }
-
-        function closeAdminAuthModal() {
-            document.getElementById('adminAuthModal').classList.add('hidden');
-        }
-
-        function verifyAdminPasscode() {
-            const code = document.getElementById('adminPasscode').value;
-            if (code === 'admin123') {
-                closeAdminAuthModal();
-                selectPortal('admin');
-            } else {
-                document.getElementById('adminAuthError').classList.remove('hidden');
-            }
-        }
-
-        // CUSTOMER TABS & SUBMISSION
-        function switchCustomerTab(tab) {
-            const btnNew = document.getElementById('tabCustomerNew');
-            const btnMine = document.getElementById('tabCustomerMine');
-            const subNew = document.getElementById('subCustomerNew');
-            const subMine = document.getElementById('subCustomerMine');
-
-            if (tab === 'new') {
-                btnNew.className = "py-2.5 px-4 font-semibold text-sm border-b-2 border-teal-600 text-teal-700";
-                btnMine.className = "py-2.5 px-4 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-700";
-                subNew.classList.remove('hidden');
-                subMine.classList.add('hidden');
-            } else {
-                btnMine.className = "py-2.5 px-4 font-semibold text-sm border-b-2 border-teal-600 text-teal-700";
-                btnNew.className = "py-2.5 px-4 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-700";
-                subMine.classList.remove('hidden');
-                subNew.classList.add('hidden');
-            }
-        }
-
-        function selectCategory(category) {
-            document.getElementById('selectedCategory').value = category;
-            document.querySelectorAll('.cat-btn').forEach(btn => {
-                btn.classList.remove('border-teal-600', 'bg-teal-50');
-            });
-            event.currentTarget.classList.add('border-teal-600', 'bg-teal-50');
-        }
-
-        async function handleRequestSubmit(e) {
-            e.preventDefault();
-            const category = document.getElementById('selectedCategory').value;
-            if (!category) {
-                alert('Please select a service category.');
-                return;
-            }
-
-            const newReq = {
-                category: category,
-                description: document.getElementById('jobDescription').value,
-                neighborhood: document.getElementById('jobNeighborhood').value,
-                contact: document.getElementById('jobContact').value,
-                customerId: myCustomerId,
-                status: "needs_clarification",
-                createdAt: firebase.firestore.Timestamp.now()
-            };
-
-            await db.collection("requests").add(newReq);
-            document.getElementById('requestForm').reset();
-            document.getElementById('selectedCategory').value = '';
-            document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('border-teal-600', 'bg-teal-50'));
-            
-            switchCustomerTab('mine');
-        }
-
-        // ARTISAN TABS
-        function switchArtisanTab(tab) {
-            const btnMarket = document.getElementById('tabArtisanMarket');
-            const btnProfile = document.getElementById('tabArtisanProfile');
-            const subMarket = document.getElementById('subArtisanMarket');
-            const subProfile = document.getElementById('subArtisanProfile');
-
-            if (tab === 'market') {
-                btnMarket.className = "py-2.5 px-4 font-semibold text-sm border-b-2 border-teal-600 text-teal-700";
-                btnProfile.className = "py-2.5 px-4 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-700";
-                subMarket.classList.remove('hidden');
-                subProfile.classList.add('hidden');
-            } else {
-                btnProfile.className = "py-2.5 px-4 font-semibold text-sm border-b-2 border-teal-600 text-teal-700";
-                btnMarket.className = "py-2.5 px-4 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-700";
-                subProfile.classList.remove('hidden');
-                subMarket.classList.add('hidden');
-            }
-        }
-
-        async function updateJobStatus(docId, newStatus) {
-            await db.collection("requests").doc(docId).update({ status: newStatus });
-        }
-
-        // RENDER FUNCTIONS
-        function renderAllViews() {
-            renderCustomerView();
-            renderArtisanView();
-            renderAdminView();
-        }
-
-        function getStatusBadge(status) {
-            switch(status) {
-                case 'needs_clarification':
-                    return `<span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-amber-100 text-amber-800">Needs Clarification</span>`;
-                case 'ready_for_review':
-                    return `<span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-indigo-100 text-indigo-800">Ready for Review</span>`;
-                case 'matching':
-                    return `<span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Matching Provider</span>`;
-                case 'booking':
-                    return `<span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">Booked</span>`;
-                case 'completed':
-                    return `<span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800">Completed</span>`;
-                default:
-                    return `<span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-slate-100 text-slate-800">${status}</span>`;
-            }
-        }
-
-        function renderCustomerView() {
-            const myRequests = requestsData.filter(r => r.customerId === myCustomerId);
-            document.getElementById('myRequestsCount').innerText = myRequests.length;
-
-            const list = document.getElementById('myRequestsList');
-            if (myRequests.length === 0) {
-                list.innerHTML = `<div class="text-center py-8 text-slate-400 text-xs">No requests submitted yet.</div>`;
-                return;
-            }
-
-            list.innerHTML = myRequests.map(r => `
-                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-2">
-                    <div class="flex justify-between items-start">
-                        <span class="font-bold text-slate-800 text-sm"><i class="fa-solid fa-tag text-teal-600 mr-1"></i>${r.category}</span>
-                        ${getStatusBadge(r.status)}
+            grid.innerHTML = filtered.map(p => `
+                <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition flex flex-col">
+                    <div class="relative h-48 overflow-hidden bg-slate-100">
+                        <img src="${p.image}" alt="${p.title}" class="w-full h-full object-cover">
+                        <span class="absolute top-3 left-3 bg-teal-900/80 backdrop-blur-md text-teal-100 text-[11px] font-bold px-2.5 py-1 rounded-full border border-teal-700">
+                            ${p.category}
+                        </span>
                     </div>
-                    <p class="text-slate-600 text-xs">${r.description}</p>
-                    <div class="text-[11px] text-slate-400 flex justify-between pt-1">
-                        <span><i class="fa-solid fa-location-dot mr-1"></i>${r.neighborhood}</span>
-                        <span>Contact: ${r.contact}</span>
+                    <div class="p-5 flex-1 flex flex-col justify-between space-y-3">
+                        <div class="space-y-1">
+                            <h3 class="font-bold text-slate-900 text-base leading-snug">${p.title}</h3>
+                            <p class="text-slate-500 text-xs line-clamp-2">${p.description}</p>
+                        </div>
+                        <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+                            <div>
+                                <div class="text-xs font-bold text-slate-800">${p.artisanName}</div>
+                                <div class="text-[10px] text-slate-400"><i class="fa-solid fa-location-dot text-rose-500"></i> ${p.location}</div>
+                            </div>
+                            <button onclick="requestProjectService('${p.category}', '${p.artisanName}')" class="bg-teal-50 hover:bg-teal-100 text-teal-700 font-bold text-xs px-3 py-2 rounded-xl transition flex items-center gap-1">
+                                <span>Request This</span>
+                                <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             `).join('');
         }
 
-        function renderArtisanView() {
-            const list = document.getElementById('artisanJobsList');
-            if (requestsData.length === 0) {
-                list.innerHTML = `<div class="text-center py-8 text-slate-400 text-xs">No active requests in market.</div>`;
+        function filterProjects(trade) {
+            document.querySelectorAll('.project-filter-btn').forEach(btn => {
+                btn.className = "project-filter-btn px-4 py-2 rounded-full bg-white text-slate-700 border border-slate-200 hover:border-teal-500";
+            });
+            event.currentTarget.className = "project-filter-btn px-4 py-2 rounded-full bg-teal-600 text-white shadow-sm border border-teal-600";
+            renderDiscoverFeed(trade);
+        }
+
+        // RENDER ARTISANS
+        function renderArtisans() {
+            const list = document.getElementById('artisansList');
+            list.innerHTML = SAMPLE_ARTISANS.map(a => `
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex space-x-4 items-center">
+                    <div class="w-14 h-14 rounded-full bg-teal-100 text-teal-800 font-black text-lg flex items-center justify-center border-2 border-teal-500 flex-shrink-0">
+                        ${a.avatar}
+                    </div>
+                    <div class="flex-1 space-y-1">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-bold text-slate-900 text-base">${a.name}</h3>
+                            <span class="text-[10px] bg-teal-50 text-teal-700 font-bold px-2 py-0.5 rounded-full border border-teal-200"><i class="fa-solid fa-check"></i> Verified</span>
+                        </div>
+                        <p class="text-xs text-slate-600 font-medium">${a.trade}</p>
+                        <div class="text-[11px] text-slate-400"><i class="fa-solid fa-location-dot text-rose-500 mr-1"></i>${a.area}</div>
+                        <div class="text-[11px] text-amber-500 font-bold"><i class="fa-solid fa-star mr-1"></i>${a.rating}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // REQUEST ACTION FROM PROJECT
+        function requestProjectService(category, artisanName) {
+            document.getElementById('reqCategory').value = category;
+            selectedArtisan = artisanName;
+            document.getElementById('preferredArtisanName').innerText = artisanName;
+            document.getElementById('preferredArtisanBanner').classList.remove('hidden');
+            switchMainTab('request');
+        }
+
+        function clearPreferredArtisan() {
+            selectedArtisan = null;
+            document.getElementById('preferredArtisanBanner').classList.add('hidden');
+        }
+
+        async function handleRequestSubmit(e) {
+            e.preventDefault();
+            const newReq = {
+                category: document.getElementById('reqCategory').value,
+                description: document.getElementById('reqDescription').value,
+                neighborhood: document.getElementById('reqArea').value,
+                contact: document.getElementById('reqPhone').value,
+                preferredArtisan: selectedArtisan || 'Any Matched Artisan',
+                customerId: myCustomerId,
+                status: 'needs_clarification',
+                createdAt: firebase.firestore.Timestamp.now()
+            };
+
+            await db.collection("requests").add(newReq);
+            document.getElementById('serviceRequestForm').reset();
+            clearPreferredArtisan();
+            switchMainTab('requests');
+        }
+
+        function renderMyRequests() {
+            const mine = requestsData.filter(r => r.customerId === myCustomerId);
+            document.getElementById('myReqCount').innerText = mine.length;
+            const list = document.getElementById('myRequestsList');
+
+            if (mine.length === 0) {
+                list.innerHTML = `<div class="bg-white p-8 rounded-2xl border border-slate-200 text-center text-slate-400 text-xs">You have no active service requests.</div>`;
                 return;
             }
 
-            list.innerHTML = requestsData.map(r => `
-                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
+            list.innerHTML = mine.map(r => `
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2">
                     <div class="flex justify-between items-start">
-                        <span class="font-bold text-slate-800 text-sm"><i class="fa-solid fa-screwdriver-wrench text-teal-600 mr-1"></i>${r.category}</span>
-                        ${getStatusBadge(r.status)}
+                        <span class="font-bold text-slate-900 text-sm"><i class="fa-solid fa-wrench text-teal-600 mr-1.5"></i>${r.category}</span>
+                        <span class="text-xs bg-amber-100 text-amber-800 font-bold px-2.5 py-0.5 rounded-full">${r.status.replace('_', ' ')}</span>
                     </div>
-                    <p class="text-slate-600 text-xs">${r.description}</p>
-                    <div class="text-xs text-slate-500 font-medium"><i class="fa-solid fa-location-dot text-rose-500 mr-1"></i>${r.neighborhood}</div>
-                    ${r.status === 'matching' ? `
-                        <button onclick="updateJobStatus('${r.id}', 'booking')" class="w-full bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold py-2 rounded-lg transition">
-                            Express Interest / Accept Job
-                        </button>
-                    ` : ''}
+                    <p class="text-xs text-slate-600">${r.description}</p>
+                    <div class="text-[11px] text-slate-400 flex justify-between pt-2 border-t border-slate-100">
+                        <span><i class="fa-solid fa-location-dot mr-1"></i>${r.neighborhood}</span>
+                        <span>Assigned: ${r.preferredArtisan}</span>
+                    </div>
                 </div>
             `).join('');
         }
 
         function renderAdminView() {
-            document.getElementById('metricTotal').innerText = requestsData.length;
-            document.getElementById('metricClarify').innerText = requestsData.filter(r => r.status === 'needs_clarification').length;
-            document.getElementById('metricMatching').innerText = requestsData.filter(r => r.status === 'matching').length;
-            document.getElementById('metricCompleted').innerText = requestsData.filter(r => r.status === 'completed').length;
+            document.getElementById('admTotal').innerText = requestsData.length;
+            document.getElementById('admClarify').innerText = requestsData.filter(r => r.status === 'needs_clarification').length;
+            document.getElementById('admMatching').innerText = requestsData.filter(r => r.status === 'matching').length;
+            document.getElementById('admCompleted').innerText = requestsData.filter(r => r.status === 'completed').length;
 
             const list = document.getElementById('adminRequestsList');
             if (requestsData.length === 0) {
-                list.innerHTML = `<div class="text-center py-8 text-slate-400 text-xs">No requests in database.</div>`;
+                list.innerHTML = `<div class="bg-white p-8 rounded-2xl text-center text-slate-400 text-xs">No active pipeline data.</div>`;
                 return;
             }
 
@@ -603,10 +522,10 @@
                 <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
                     <div class="flex justify-between items-start">
                         <div>
-                            <span class="font-bold text-slate-900 text-sm mr-2">${r.category}</span>
-                            <span class="text-xs text-slate-400">#${r.id.substr(0, 5)}</span>
+                            <span class="font-bold text-slate-900 text-sm">${r.category}</span>
+                            <span class="text-xs text-slate-400 ml-2">#${r.id.substr(0, 5)}</span>
                         </div>
-                        ${getStatusBadge(r.status)}
+                        <span class="text-xs bg-teal-100 text-teal-800 font-bold px-2.5 py-0.5 rounded-full">${r.status}</span>
                     </div>
                     <p class="text-xs text-slate-600">${r.description}</p>
                     <div class="text-xs text-slate-500 flex justify-between">
@@ -627,23 +546,46 @@
             `).join('');
         }
 
-        // EXPORT CSV
-        function exportCSV() {
-            if (requestsData.length === 0) {
-                alert('No data to export.');
-                return;
+        async function updateJobStatus(docId, newStatus) {
+            await db.collection("requests").doc(docId).update({ status: newStatus });
+        }
+
+        // ADMIN PASSCODE AUTH
+        function openAdminAuthModal() {
+            document.getElementById('adminPasscode').value = '';
+            document.getElementById('adminAuthError').classList.add('hidden');
+            document.getElementById('adminAuthModal').classList.remove('hidden');
+        }
+
+        function closeAdminAuthModal() {
+            document.getElementById('adminAuthModal').classList.add('hidden');
+        }
+
+        function verifyAdminPasscode() {
+            const code = document.getElementById('adminPasscode').value;
+            if (code === 'admin123') {
+                closeAdminAuthModal();
+                switchMainTab('admin');
+            } else {
+                document.getElementById('adminAuthError').classList.remove('hidden');
             }
+        }
+
+        function exportCSV() {
+            if (requestsData.length === 0) return alert('No data to export.');
             let csv = 'ID,Category,Description,Neighborhood,Contact,Status\n';
-            requestsData.forEach(r => {
-                csv += `"${r.id}","${r.category}","${r.description.replace(/"/g, '""')}","${r.neighborhood}","${r.contact}","${r.status}"\n`;
-            });
+            requestsData.forEach(r => csv += `"${r.id}","${r.category}","${r.description.replace(/"/g, '""')}","${r.neighborhood}","${r.contact}","${r.status}"\n`);
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.setAttribute('href', url);
-            a.setAttribute('download', 'platter_requests.csv');
+            a.setAttribute('download', 'platter_metrics.csv');
             a.click();
         }
+
+        // INIT
+        renderDiscoverFeed('all');
+        renderArtisans();
     </script>
 </body>
 </html>
