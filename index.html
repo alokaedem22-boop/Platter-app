@@ -1,591 +1,487 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Platter — Visual Artisan Discovery & Service Marketplace</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        teal: {
-                            50: '#f0fdfa',
-                            100: '#ccfbf1',
-                            500: '#14b8a6',
-                            600: '#0d9488',
-                            700: '#0f766e',
-                            800: '#115e59',
-                            900: '#042f2e',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Firebase / Supabase SDK Sync -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Platter — Visual Artisan Discovery & Service Marketplace</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root{--ink:#14302C;--mut:#4F6B66;--bg:#F4F9F8;--line:#D3E4E0;--tint:#DDEEEA;--brand:#65B0A6;--deep:#2A766D;--dark:#1F5E56}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 Montserrat,system-ui,sans-serif}
+header{background:var(--dark);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:8px;flex-wrap:nowrap;position:sticky;top:0;z-index:5}
+header img{height:22px;width:auto}
+nav{display:flex;gap:4px;flex:0 1 auto;flex-wrap:nowrap}
+.tab,.btn,.ghost{font:inherit;font-weight:600;border-radius:12px;cursor:pointer;min-height:40px;padding:0 16px;border:0}
+.tab{background:transparent;color:#E3F1EE}.tab.on{background:var(--deep);color:#fff}
+.btn{background:var(--deep);color:#fff}.ghost{background:#fff;color:var(--dark);border:2px solid var(--deep)}
+.btn:disabled,.ghost:disabled{opacity:.6;cursor:wait}
+.sm{min-height:34px;padding:0 12px;font-size:12px}
+main{max-width:960px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:16px;margin:26px 0 10px}
+.m{color:var(--mut);font-size:12px}
+.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px}
+.list{display:grid;gap:10px}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.grow{flex:1;min-width:150px}
+label{display:block;font-weight:600;font-size:12px;margin-bottom:12px}
+input,select,textarea{display:block;width:100%;margin-top:6px;font:inherit;padding:11px 12px;border:1px solid #BFD5D0;border-radius:12px;background:#fff;color:var(--ink)}
+input[type=checkbox]{display:inline;width:auto;margin:0 8px 0 0}
+:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
+.tag{display:inline-block;border-radius:8px;padding:2px 9px;font-size:11px;font-weight:700;background:var(--tint);color:var(--dark)}
+.warn{background:#FBEFD5;color:#7A4B00}.good{background:#DDF0DC;color:#1E5A2B}.gray{background:#ECEFEE;color:var(--mut)}
+table{width:100%;border-collapse:collapse;min-width:720px}
+td,th{padding:10px 8px;border-bottom:1px solid #E3EEEB;text-align:left;vertical-align:top;font-size:13px}th{color:var(--mut);font-size:12px}
+.tw{overflow-x:auto}.auth{max-width:420px;margin:30px auto}
+.err{color:#8A1F1F;font-weight:600;font-size:12px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:14px 0}.stats b{font-size:22px;display:block}
+a{color:var(--dark);font-weight:600}
+.logo-btn{background:transparent;border:0;border-radius:999px;padding:8px 14px;min-height:40px;cursor:pointer;display:flex;align-items:center}
+.logo-btn.on{background:var(--deep);box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
+header .tab{padding:0 9px;white-space:nowrap;font-size:13px}#out{margin-left:auto;font-size:12px;padding:0 8px}.logo-btn{padding:8px 10px}header img{height:20px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:var(--dark);color:#fff;border-radius:16px;padding:10px;margin:10px 0}
+.toolbar input,.toolbar select{margin:0;width:auto;flex:1;min-width:140px;min-height:40px;background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.22);border-radius:12px;padding:0 12px}
+.toolbar input::placeholder{color:#BFE1DA}.toolbar select option{color:var(--ink);background:#fff}
+.toolbtn{font:inherit;font-weight:600;font-size:12px;background:transparent;color:#E3F1EE;border:0;min-height:40px;padding:0 10px;cursor:pointer;border-radius:12px}
+.seg{display:flex;background:rgba(255,255,255,.08);border-radius:12px;padding:3px}
+.seg button{font:inherit;font-size:12px;font-weight:600;border:0;background:transparent;color:#E3F1EE;min-height:34px;padding:0 12px;border-radius:9px;cursor:pointer}
+.seg button.on{background:#fff;color:var(--dark)}
+.gridv{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.gbtn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:48px;background:#fff;color:#1F1F1F;border:1px solid #DADCE0;border-radius:14px;font:inherit;font-weight:600;font-size:14px;cursor:pointer}
+.or{display:flex;align-items:center;gap:10px;color:var(--mut);font-size:12px;margin:14px 0}
+.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+.note{background:#FFF8E8;border:1px solid #F0DDB0;color:#6B4A00;border-radius:14px;padding:10px 12px;font-size:12px;margin:12px 0}
+</style>
+<link rel="stylesheet" href="platter-style.css">
 </head>
-<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col font-sans pb-20 md:pb-8">
+<body>
+<header>
+  <button class="logo-btn" id="home" aria-label="Platter home"><img id="logo" src="platter-wordmark-white.png" alt="Platter" onerror="this.outerHTML='<b>Platter.</b>'"></button>
+  <nav id="nav"></nav>
+  <button class="tab" id="out" hidden>Log out</button>
+</header>
+<main><div id="msg" role="status" aria-live="polite"></div><div id="view"></div></main>
+<footer class="m" style="text-align:center;padding:0 16px 28px;position:relative;z-index:1"><a href="terms.html">Terms of Use</a> &middot; <a href="privacy.html">Privacy Notice</a></footer>
 
-    <!-- TOP NAV HEADER -->
-    <header class="bg-teal-900 text-white shadow-md sticky top-0 z-40">
-        <div class="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="flex items-center space-x-2 cursor-pointer" onclick="switchMainTab('discover')">
-                <div class="w-8 h-8 rounded-lg bg-teal-500 flex items-center justify-center font-black text-teal-900 text-lg shadow-inner">P</div>
-                <div>
-                    <span class="font-bold text-xl tracking-wide text-teal-50">Platter</span>
-                    <span class="text-[10px] bg-teal-800 text-teal-200 px-2 py-0.5 rounded-full border border-teal-700 ml-1">v0.5 Pilot</span>
-                </div>
-            </div>
-            
-            <!-- DESKTOP NAVIGATION LINKS -->
-            <nav class="hidden md:flex items-center space-x-6 text-sm font-semibold">
-                <button onclick="switchMainTab('discover')" class="nav-desktop-btn hover:text-teal-300 transition text-teal-300" id="deskNavDiscover">Discover Projects</button>
-                <button onclick="switchMainTab('artisans')" class="nav-desktop-btn hover:text-teal-300 transition text-slate-300" id="deskNavArtisans">Artisans</button>
-                <button onclick="switchMainTab('request')" class="nav-desktop-btn bg-teal-600 hover:bg-teal-500 text-white px-3.5 py-1.5 rounded-lg transition shadow" id="deskNavRequest">Request Service</button>
-                <button onclick="switchMainTab('requests')" class="nav-desktop-btn hover:text-teal-300 transition text-slate-300" id="deskNavRequests">My Requests</button>
-            </nav>
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+const { SUPABASE_URL, SUPABASE_KEY } = window.PLATTER_CONFIG || { SUPABASE_URL: 'PASTE_PROJECT_URL', SUPABASE_KEY: 'PASTE_ANON_KEY' };
 
-            <!-- ROLE & ADMIN LOGOUT BUTTON -->
-            <div id="roleHeaderBadge" class="flex items-center space-x-2">
-                <span id="currentRoleLabel" class="text-xs bg-teal-800 text-teal-100 font-semibold px-2.5 py-1 rounded-full border border-teal-600 flex items-center gap-1">
-                    <i class="fa-solid fa-compass text-teal-300"></i> Visitor
-                </span>
-                <button onclick="openAdminAuthModal()" class="text-xs bg-teal-800 hover:bg-teal-700 text-teal-200 px-2.5 py-1 rounded-md transition font-medium flex items-center gap-1 border border-teal-700">
-                    <i class="fa-solid fa-lock text-[10px]"></i> Admin
-                </button>
-            </div>
-        </div>
-    </header>
+const MOVE = 'Pickup & goods transport';
+const TRADES = ['Tiling','Kitchen cabinet installation','Door installation','Bathroom fitting & plumbing', MOVE];
+const ST = {draft:['Draft',''],needs_clarification:['Needs details','warn'],submitted:['Waiting for a match',''],pending:['Sent to provider',''],accepted:['Provider interested',''],declined:['Declined','gray'],booked:['Booked',''],awaiting_confirmation:['Work done, please confirm','warn'],completed:['Completed','good'],cancelled:['Cancelled','gray'],disputed:['Disputed','warn']};
 
-    <!-- MAIN APP BODY -->
-    <main class="max-w-5xl mx-auto w-full px-4 pt-6 flex-1">
+// Behance-style Sample Portfolio Showcase Projects
+const SAMPLE_PROJECTS = [
+  {
+    id: 'p1',
+    title: 'Modern Italian Porcelain Bathroom Tiling',
+    trade: 'Tiling',
+    category: 'Tiling',
+    artisanName: 'Kwame Mensah',
+    location: 'East Legon, Accra',
+    image: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=600&q=80',
+    description: 'Full wall-to-floor waterproofing and precision porcelain tile installation finished with epoxy grout.'
+  },
+  {
+    id: 'p2',
+    title: 'Custom Acrylic Kitchen Cabinetry',
+    trade: 'Kitchen cabinet installation',
+    category: 'Kitchen cabinet installation',
+    artisanName: 'Kofi Owusu',
+    location: 'Cantonments, Accra',
+    image: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=600&q=80',
+    description: 'Modular high-gloss kitchen island and soft-close cabinet assembly with concealed hinges.'
+  },
+  {
+    id: 'p3',
+    title: 'Solid Hardwood Security Front Door',
+    trade: 'Door installation',
+    category: 'Door installation',
+    artisanName: 'Emmanuel Addo',
+    location: 'Airport Residential, Accra',
+    image: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=600&q=80',
+    description: 'Custom Odum hardwood main door alignment, weatherproofing, and smart lock installation.'
+  },
+  {
+    id: 'p4',
+    title: 'Polished Marble Living Room Floor',
+    trade: 'Tiling',
+    category: 'Tiling',
+    artisanName: 'Kwame Mensah',
+    location: 'Osu, Accra',
+    image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80',
+    description: 'Large-format marble tile laying with seamless levelling across living and dining spaces.'
+  }
+];
 
-        <!-- ================================================================= -->
-        <!-- SECTION 1: DISCOVER FEED (BEHANCE-STYLE COMPLETED PROJECTS)       -->
-        <!-- ================================================================= -->
-        <section id="secDiscover" class="space-y-6">
-            <div class="bg-gradient-to-r from-teal-900 to-teal-800 text-white p-6 rounded-2xl shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div class="space-y-1 max-w-xl">
-                    <span class="text-xs font-bold uppercase tracking-wider text-teal-300 bg-teal-950/50 px-2.5 py-1 rounded-full">Portfolio Showcase</span>
-                    <h1 class="text-2xl md:text-3xl font-extrabold text-teal-50">Discover Real Work by Ghana's Skilled Artisans</h1>
-                    <p class="text-xs md:text-sm text-teal-100">Explore verified completed projects in tiling, kitchen cabinets, doors, and carpentry before hiring.</p>
-                </div>
-                <button onclick="switchMainTab('request')" class="self-start md:self-center bg-teal-500 hover:bg-teal-400 text-teal-950 font-bold px-5 py-3 rounded-xl transition shadow-lg flex items-center gap-2 whitespace-nowrap">
-                    <i class="fa-solid fa-plus-circle"></i> Post Job Request
-                </button>
-            </div>
+const $ = s => document.querySelector(s);
+const view = $('#view');
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const tag = s => `<span class="tag ${(ST[s]||['',''])[1]}">${esc((ST[s]||[s])[0])}</span>`;
+const opts = (arr, sel) => arr.map(a => `<option value="${esc(a)}"${a === sel ? ' selected' : ''}>${esc(a)}</option>`).join('');
+const day = t => new Date(t).toLocaleDateString([], {day:'numeric', month:'short'});
+const tel = p => p ? `<a href="tel:${esc(p)}">${esc(p)}</a>` : '';
+const GLOGO = '<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>';
 
-            <!-- TRADE CATEGORY FILTERS -->
-            <div class="flex items-center space-x-2 overflow-x-auto pb-2 scrollbar-none text-xs font-semibold">
-                <button onclick="filterProjects('all')" class="project-filter-btn px-4 py-2 rounded-full bg-teal-600 text-white shadow-sm border border-teal-600">All Trades</button>
-                <button onclick="filterProjects('Tiling')" class="project-filter-btn px-4 py-2 rounded-full bg-white text-slate-700 border border-slate-200 hover:border-teal-500">Bathroom & Floor Tiling</button>
-                <button onclick="filterProjects('Cabinets')" class="project-filter-btn px-4 py-2 rounded-full bg-white text-slate-700 border border-slate-200 hover:border-teal-500">Kitchen Cabinets</button>
-                <button onclick="filterProjects('Doors')" class="project-filter-btn px-4 py-2 rounded-full bg-white text-slate-700 border border-slate-200 hover:border-teal-500">Door Installation</button>
-                <button onclick="filterProjects('Carpentry')" class="project-filter-btn px-4 py-2 rounded-full bg-white text-slate-700 border border-slate-200 hover:border-teal-500">Custom Carpentry</button>
-                <button onclick="filterProjects('Plumbing')" class="project-filter-btn px-4 py-2 rounded-full bg-white text-slate-700 border border-slate-200 hover:border-teal-500">Plumbing</button>
-            </div>
+function moveDetails(f) {
+  if (f.get('category') !== MOVE) return {};
+  const t = k => String(f.get(k) || '').trim().slice(0, 200);
+  return { from: t('mv_from'), to: t('mv_to'), items: t('mv_items'), vehicle: t('mv_vehicle'), help: f.get('mv_help') === 'on' };
+}
+function detailsHtml(r) {
+  const d = r.details || {}; if (!d.from && !d.to && !d.items) return '';
+  return `<p class="m" style="margin:6px 0">${d.from ? 'Collect from: <b>' + esc(d.from) + '</b>' : ''}${d.to ? ' · Deliver to: <b>' + esc(d.to) + '</b>' : ''}${d.items ? ' · Items: ' + esc(d.items) : ''}${d.vehicle ? ' · Vehicle: ' + esc(d.vehicle) : ''}${d.help ? ' · Loading help needed' : ''}</p>`;
+}
+function flash(t, bad) { const m = $('#msg'); m.className = bad ? 'err' : 'm'; m.textContent = t; }
 
-            <!-- BEHANCE-STYLE PROJECT GRID -->
-            <div id="projectsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Projects populated dynamically -->
-            </div>
-        </section>
+if (SUPABASE_URL.startsWith('PASTE')) {
+  view.innerHTML = '<div class="card auth"><h1>Setup needed</h1><p>Open config.js and paste your Supabase project URL and anon key.</p></div>';
+} else {
+  var sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  var me = null, tab = '', filter = 'all', projFilter = 'all', prefillCategory = '', prefillArtisan = '';
+  boot();
+}
 
-        <!-- ================================================================= -->
-        <!-- SECTION 2: ARTISAN DIRECTORY & PROFILES                           -->
-        <!-- ================================================================= -->
-        <section id="secArtisans" class="hidden space-y-6">
-            <div class="flex justify-between items-center">
-                <div>
-                    <h2 class="text-xl font-bold text-slate-900">Verified Artisan Directory</h2>
-                    <p class="text-xs text-slate-500">Find experienced, vetted local service providers in your neighborhood.</p>
-                </div>
-            </div>
+async function boot() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { me = null; $('#out').hidden = true; $('#nav').innerHTML = ''; $('#home').classList.remove('on'); return authView('login'); }
+  const { data, error } = await sb.from('profiles').select('*').eq('id', session.user.id).single();
+  if (error || !data) { await sb.auth.signOut(); flash('Could not load your profile. Please log in again.', true); return authView('login'); }
+  me = data; $('#out').hidden = false;
+  if (me.is_suspended) { await sb.auth.signOut(); $('#out').hidden = true; flash('This account has been suspended. Please contact Platter.', true); return authView('login'); }
+  if (!me.consented_at && me.role !== 'admin') return finishView();
+  go(me.role === 'admin' ? 'admin' : me.role === 'artisan' ? 'provider' : 'discover');
+}
 
-            <div id="artisansList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Artisans populated dynamically -->
-            </div>
-        </section>
+function go(t) {
+  tab = t; flash('');
+  $('#home').classList.toggle('on', (t === 'admin' && me.role === 'admin') || t === 'discover');
+  
+  if (me.role === 'admin') {
+    $('#nav').innerHTML = [['discover','Discover'],['customer','Request Service'],['provider','Provider'],['admin','Admin']].map(([k,l]) => `<button class="tab${k===t?' on':''}" data-go="${k}">${l}</button>`).join('');
+  } else if (me.role === 'customer') {
+    $('#nav').innerHTML = [['discover','Discover'],['customer','Request Service'],['mine','My Requests']].map(([k,l]) => `<button class="tab${k===t?' on':''}" data-go="${k}">${l}</button>`).join('');
+  } else {
+    $('#nav').innerHTML = [['discover','Discover'],['provider','Provider']].map(([k,l]) => `<button class="tab${k===t?' on':''}" data-go="${k}">${l}</button>`).join('');
+  }
 
-        <!-- ================================================================= -->
-        <!-- SECTION 3: SERVICE REQUEST FORM                                   -->
-        <!-- ================================================================= -->
-        <section id="secRequest" class="hidden max-w-xl mx-auto space-y-4">
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
-                <div>
-                    <span class="text-xs font-bold text-teal-600 uppercase tracking-wider">Service Marketplace</span>
-                    <h2 class="text-xl font-bold text-slate-900">Submit a Service Request</h2>
-                    <p class="text-xs text-slate-500 mt-1">Tell us what you need done. Choose a specific artisan or let Platter match you with the best available provider.</p>
-                </div>
+  const views = { discover: discoverView, customer: customerView, mine: myRequestsView, provider: providerView, admin: adminView };
+  if (views[t]) views[t]();
+}
 
-                <form id="serviceRequestForm" onsubmit="handleRequestSubmit(event)" class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Selected Service Trade</label>
-                        <select id="reqCategory" required class="w-full text-sm border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-teal-500 outline-none bg-slate-50 font-medium">
-                            <option value="">Select a Trade Category...</option>
-                            <option value="Bathroom Tiling">Bathroom & Floor Tiling</option>
-                            <option value="Kitchen Cabinet Installation">Kitchen Cabinet Installation</option>
-                            <option value="Door Installation">Door & Lock Installation</option>
-                            <option value="Custom Carpentry">Custom Carpentry & Woodwork</option>
-                            <option value="Plumbing">Plumbing Services</option>
-                            <option value="Electrical">Electrical Installations</option>
-                        </select>
-                    </div>
+$('#out').onclick = async () => { await sb.auth.signOut(); boot(); };
+$('#home').onclick = () => { if (me) go('discover'); else authView('login'); };
 
-                    <div id="preferredArtisanBanner" class="hidden bg-teal-50 border border-teal-200 rounded-xl p-3 text-xs text-teal-800 flex items-center justify-between">
-                        <div>
-                            <span class="font-bold">Target Artisan:</span> <span id="preferredArtisanName">Kwame Mensah</span>
-                        </div>
-                        <button type="button" onclick="clearPreferredArtisan()" class="text-rose-600 font-bold hover:underline">Remove</button>
-                    </div>
+/* ---------- Sign up and log in ---------- */
+function authView(mode) {
+  const su = mode === 'signup';
+  view.innerHTML = `<div class="card auth"><h1>${su ? 'Create your account' : 'Log in'}</h1>
+  <p class="m">Reliable help, on a silver platter.</p>
+  <button class="gbtn" id="gbtn" type="button">${GLOGO}Continue with Google</button>
+  <div class="or"><span>${su ? 'or sign up with email' : 'or log in with email'}</span></div>
+  <form id="af">
+    ${su ? `<label>Full name<input name="full_name" required autocomplete="name"></label>
+    <label>Phone number<input name="phone" type="tel" required autocomplete="tel" placeholder="+233..."></label>
+    <label>I want to<select name="role" id="role"><option value="customer">Find a service</option><option value="artisan">Offer a service</option></select></label>
+    <div id="pfields" hidden><label>Your trade<select name="trade">${opts(TRADES)}</select></label>
+    <label>Area you cover<input name="area" placeholder="Neighbourhood or district"></label></div>` : ''}
+    <label>Email<input name="email" type="email" required autocomplete="email"></label>
+    <label>Password<input name="password" type="password" required minlength="6" autocomplete="${su ? 'new-password' : 'current-password'}"></label>
+    ${su ? `<div style="display: flex; align-items: flex-start; gap: 8px; margin: 12px 0;"><input type="checkbox" name="consent" required style="margin-top: 3px; flex-shrink: 0;"><span style="font-size: 13px; line-height: 1.4; color: #4a5568;">I agree to the <a href="terms.html" target="_blank" rel="noopener" style="color: #0d9488; text-decoration: underline;">Terms of Use</a> and have read the <a href="privacy.html" target="_blank" rel="noopener" style="color: #0d9488; text-decoration: underline;">Privacy Notice</a>.</span></div>` : ''}
+    <div id="aerr" class="err"></div>
+    <button class="btn" style="width:100%">${su ? 'Create account' : 'Log in'}</button>
+  </form>
+  <p class="m" style="margin-top:14px"><button class="tab" style="color:var(--dark);padding:0" data-go="${su ? 'login' : 'signup'}">${su ? 'I already have an account' : 'Create an account'}</button> &middot; <button class="tab" style="color:var(--dark);padding:0" data-go="discover">Browse Discover Feed</button></p></div>`;
+  const role = $('#role'); if (role) role.onchange = () => $('#pfields').hidden = role.value !== 'artisan';
+  $('#gbtn').onclick = async () => { const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + location.pathname } }); if (error) $('#aerr').textContent = error.message; };
+  $('#af').onsubmit = async e => {
+    e.preventDefault(); const f = Object.fromEntries(new FormData(e.target)); const out = $('#aerr'); out.textContent = '';
+    if (su) {
+      const { data, error } = await sb.auth.signUp({ email: f.email, password: f.password, options: { data: { full_name: f.full_name, phone: f.phone, role: f.role, trade: f.trade, area: f.area, consent: f.consent ? 'true' : 'false' } } });
+      if (error) return out.textContent = error.message;
+      if (!data.session) { out.textContent = 'Account created. Check your email to confirm it, then log in.'; return; }
+    } else {
+      const { error } = await sb.auth.signInWithPassword({ email: f.email, password: f.password });
+      if (error) return out.textContent = error.message;
+    }
+    boot();
+  };
+}
 
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Scope & Description</label>
-                        <textarea id="reqDescription" rows="3" required placeholder="Provide details (e.g. tile dimensions, materials purchased, urgency)..." class="w-full text-sm border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-teal-500 outline-none"></textarea>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Neighborhood / Area</label>
-                            <input type="text" id="reqArea" required placeholder="e.g. East Legon, Spintex, Osu" class="w-full text-sm border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-teal-500 outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Contact Phone</label>
-                            <input type="tel" id="reqPhone" required placeholder="024 XXX XXXX" class="w-full text-sm border border-slate-300 rounded-xl p-3 focus:ring-2 focus:ring-teal-500 outline-none">
-                        </div>
-                    </div>
-
-                    <button type="submit" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-4 rounded-xl shadow-md transition flex items-center justify-center space-x-2">
-                        <i class="fa-solid fa-paper-plane"></i>
-                        <span>Submit Job Request</span>
-                    </button>
-                </form>
-            </div>
-        </section>
-
-        <!-- ================================================================= -->
-        <!-- SECTION 4: MY REQUESTS & TRACKING                                 -->
-        <!-- ================================================================= -->
-        <section id="secRequests" class="hidden space-y-4">
-            <div class="flex justify-between items-center">
-                <h2 class="text-xl font-bold text-slate-900">Your Submitted Requests</h2>
-                <span class="text-xs bg-slate-200 text-slate-700 font-bold px-2.5 py-1 rounded-full"><span id="myReqCount">0</span> Active</span>
-            </div>
-
-            <div id="myRequestsList" class="space-y-3">
-                <!-- User requests populated dynamically -->
-            </div>
-        </section>
-
-        <!-- ================================================================= -->
-        <!-- SECTION 5: ADMIN OPERATIONS CONTROL                               -->
-        <!-- ================================================================= -->
-        <section id="secAdmin" class="hidden space-y-6">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900 text-white p-5 rounded-2xl">
-                <div>
-                    <h2 class="text-lg font-bold">Platter Operations Dashboard</h2>
-                    <p class="text-xs text-slate-400">Review job lifecycle stage, verify artisans & export platform metrics.</p>
-                </div>
-                <button onclick="exportCSV()" class="bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-file-csv"></i> Export CSV Report
-                </button>
-            </div>
-
-            <!-- METRIC CARDS -->
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                    <div class="text-slate-500 text-xs font-semibold">Total Requests</div>
-                    <div id="admTotal" class="text-2xl font-black text-slate-800 mt-0.5">0</div>
-                </div>
-                <div class="bg-amber-50 p-4 rounded-xl border border-amber-200 shadow-sm">
-                    <div class="text-amber-700 text-xs font-semibold">Needs Clarification</div>
-                    <div id="admClarify" class="text-2xl font-black text-amber-800 mt-0.5">0</div>
-                </div>
-                <div class="bg-blue-50 p-4 rounded-xl border border-blue-200 shadow-sm">
-                    <div class="text-blue-700 text-xs font-semibold">Matching</div>
-                    <div id="admMatching" class="text-2xl font-black text-blue-800 mt-0.5">0</div>
-                </div>
-                <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-200 shadow-sm">
-                    <div class="text-emerald-700 text-xs font-semibold">Completed</div>
-                    <div id="admCompleted" class="text-2xl font-black text-emerald-800 mt-0.5">0</div>
-                </div>
-            </div>
-
-            <!-- ADMIN PIPELINE LIST -->
-            <div id="adminRequestsList" class="space-y-3">
-                <!-- Admin view populated dynamically -->
-            </div>
-        </section>
-
-    </main>
-
-    <!-- MOBILE BOTTOM NAVIGATION BAR -->
-    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 py-2 px-4 md:hidden flex justify-around items-center z-40 text-slate-500 text-[10px] font-semibold">
-        <button onclick="switchMainTab('discover')" id="mobNavDiscover" class="flex flex-col items-center text-teal-600">
-            <i class="fa-solid fa-compass text-base mb-0.5"></i> Discover
-        </button>
-        <button onclick="switchMainTab('artisans')" id="mobNavArtisans" class="flex flex-col items-center">
-            <i class="fa-solid fa-user-group text-base mb-0.5"></i> Artisans
-        </button>
-        <button onclick="switchMainTab('request')" id="mobNavRequest" class="flex flex-col items-center">
-            <i class="fa-solid fa-circle-plus text-base mb-0.5 text-teal-600"></i> Request
-        </button>
-        <button onclick="switchMainTab('requests')" id="mobNavRequests" class="flex flex-col items-center">
-            <i class="fa-solid fa-list-check text-base mb-0.5"></i> My Jobs
-        </button>
+/* ---------- Discover Feed (Behance-style project showcase) ---------- */
+function discoverView() {
+  const filtered = projFilter === 'all' ? SAMPLE_PROJECTS : SAMPLE_PROJECTS.filter(p => p.trade === projFilter);
+  view.innerHTML = `
+    <div class="card" style="background:linear-gradient(135deg,var(--dark),var(--deep));color:#fff;margin-bottom:16px;border:0">
+      <h1>Discover Ghana's Skilled Artisans</h1>
+      <p style="margin:6px 0 14px;color:#E3F1EE">Explore verified completed projects in tiling, kitchen cabinets, doors, and carpentry before hiring.</p>
+      ${!me ? `<button class="btn" style="background:#fff;color:var(--dark)" data-go="signup">Create account to hire</button>` : `<button class="btn" style="background:#fff;color:var(--dark)" data-go="customer">Request a Service</button>`}
+    </div>
+    
+    <div class="toolbar" style="background:transparent;padding:0;margin-bottom:14px">
+      <div class="seg" style="background:var(--tint);width:100%;overflow-x:auto;padding:4px">
+        <button data-act="projflt" data-val="all" class="${projFilter === 'all' ? 'on' : ''}" style="color:var(--dark)">All Trades</button>
+        <button data-act="projflt" data-val="Tiling" class="${projFilter === 'Tiling' ? 'on' : ''}" style="color:var(--dark)">Tiling</button>
+        <button data-act="projflt" data-val="Kitchen cabinet installation" class="${projFilter === 'Kitchen cabinet installation' ? 'on' : ''}" style="color:var(--dark)">Kitchen Cabinets</button>
+        <button data-act="projflt" data-val="Door installation" class="${projFilter === 'Door installation' ? 'on' : ''}" style="color:var(--dark)">Doors</button>
+      </div>
     </div>
 
-    <!-- ADMIN PASSCODE MODAL -->
-    <div id="adminAuthModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-xs w-full p-5 shadow-2xl space-y-4 border border-slate-100">
-            <div class="text-center">
-                <div class="w-10 h-10 rounded-full bg-slate-100 text-slate-700 mx-auto flex items-center justify-center mb-2">
-                    <i class="fa-solid fa-lock text-lg"></i>
-                </div>
-                <h3 class="font-bold text-slate-900">Admin Gateway</h3>
-                <p class="text-xs text-slate-500 mt-0.5">Enter admin passcode to unlock operational controls</p>
+    <div class="gridv">
+      ${filtered.map(p => `
+        <div class="card" style="display:flex;flex-direction:column;padding:0;overflow:hidden">
+          <div style="position:relative;height:180px;background:#e2e8f0;">
+            <img src="${p.image}" alt="${esc(p.title)}" style="width:100%;height:100%;object-fit:cover;margin:0">
+            <span class="tag" style="position:absolute;top:10px;left:10px;background:rgba(0,0,0,0.6);color:#fff">${esc(p.category)}</span>
+          </div>
+          <div style="padding:14px;flex:1;display:flex;flex-direction:column;justify-content:space-between">
+            <div>
+              <b style="font-size:15px;display:block;margin-bottom:4px">${esc(p.title)}</b>
+              <p class="m" style="margin:0 0 10px">${esc(p.description)}</p>
             </div>
-            
-            <input type="password" id="adminPasscode" placeholder="Enter passcode" class="w-full text-center text-sm font-bold border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-teal-500 outline-none">
-            <p id="adminAuthError" class="text-xs text-rose-600 text-center hidden font-medium">Incorrect passcode. Try again.</p>
-
-            <div class="flex gap-2">
-                <button onclick="closeAdminAuthModal()" class="w-1/2 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg">Cancel</button>
-                <button onclick="verifyAdminPasscode()" class="w-1/2 py-2 text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 rounded-lg">Unlock</button>
+            <div style="border-top:1px solid var(--line);padding-top:10px;display:flex;align-items:center;justify-content:between">
+              <div>
+                <b style="font-size:12px">${esc(p.artisanName)}</b>
+                <div class="m"><i class="fa-solid fa-location-dot" style="color:#e11d48"></i> ${esc(p.location)}</div>
+              </div>
+              <button class="btn sm" data-act="reqproj" data-cat="${esc(p.category)}" data-art="${esc(p.artisanName)}">Request This</button>
             </div>
+          </div>
         </div>
+      `).join('')}
     </div>
+    ${accountBox()}
+  `;
+}
 
-    <!-- APPLICATION LOGIC -->
-    <script>
-        // FIREBASE / SUPABASE SYNC BACKEND
-        const firebaseConfig = {
-            apiKey: "AIzaSyDummyKeyForPlatterPilotTestingOnly",
-            authDomain: "platter-pilot.firebaseapp.com",
-            projectId: "platter-pilot",
-            storageBucket: "platter-pilot.appspot.com",
-            messagingSenderId: "1234567890",
-            appId: "1:1234567890:web:platterpilot"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+/* ---------- Your information (all signed-in people) ---------- */
+function accountBox() {
+  if (!me || me.role === 'admin') return '';
+  return `<h2 style="margin-top:30px">Your information</h2><div class="card"><p class="m" style="margin:0 0 10px">You can ask us to delete your account and the information we hold about you. See the <a href="privacy.html" target="_blank" rel="noopener">Privacy Notice</a>.</p>${me.deletion_requested_at ? `<span class="tag warn">Deletion requested on ${day(me.deletion_requested_at)}</span>` : '<button class="ghost sm" data-act="deleteme">Request deletion of my account</button>'}</div>`;
+}
 
-        // SAMPLE COMPLETED PROJECTS FOR BEHANCE DISCOVER FEED
-        const SAMPLE_PROJECTS = [
-            {
-                id: 'p1',
-                title: 'Modern Italian Porcelain Bathroom Tiling',
-                trade: 'Tiling',
-                category: 'Bathroom Tiling',
-                artisanName: 'Kwame Mensah',
-                artisanRole: 'Master Tiler & Mason',
-                location: 'East Legon, Accra',
-                image: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=600&q=80',
-                description: 'Full wall-to-floor waterproofing and precision porcelain tile installation finished with epoxy grout.'
-            },
-            {
-                id: 'p2',
-                title: 'Custom Acrylic Kitchen Cabinetry',
-                trade: 'Cabinets',
-                category: 'Kitchen Cabinet Installation',
-                artisanName: 'Kofi Owusu',
-                artisanRole: 'Cabinet & Interior Woodwork Specialist',
-                location: 'Cantonments, Accra',
-                image: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=600&q=80',
-                description: 'Modular high-gloss kitchen island and soft-close cabinet assembly with concealed hinges.'
-            },
-            {
-                id: 'p3',
-                title: 'Solid Hardwood Security Front Door',
-                trade: 'Doors',
-                category: 'Door Installation',
-                artisanName: 'Emmanuel Addo',
-                artisanRole: 'Carpentry & Door Fitting Expert',
-                location: 'Airport Residential, Accra',
-                image: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=600&q=80',
-                description: 'Custom Odum hardwood main door alignment, weatherproofing, and smart lock installation.'
-            },
-            {
-                id: 'p4',
-                title: 'Polished Marble Living Room Floor',
-                trade: 'Tiling',
-                category: 'Bathroom Tiling',
-                artisanName: 'Kwame Mensah',
-                artisanRole: 'Master Tiler & Mason',
-                location: 'Osu, Accra',
-                image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80',
-                description: 'Large-format marble tile laying with seamless levelling across a 120 sqm living space.'
-            }
-        ];
+/* ---------- Finish setting up (first Google sign-in) ---------- */
+function finishView() {
+  $('#nav').innerHTML = ''; $('#home').classList.remove('on');
+  view.innerHTML = `<div class="card auth"><h1>Finish setting up</h1><p class="m">Welcome${me.full_name ? ', ' + esc(me.full_name) : ''}. Tell us a little more so Platter can help you.</p>
+  <form id="ff">
+    <label>Phone number<input name="phone" type="tel" required autocomplete="tel" placeholder="+233..." value="${esc(me.phone)}"></label>
+    <label>I want to<select name="role" id="role"><option value="customer">Find a service</option><option value="artisan"${me.role === 'artisan' ? ' selected' : ''}>Offer a service</option></select></label>
+    <div id="pfields" hidden><label>Your trade<select name="trade">${opts(TRADES)}</select></label><label>Area you cover<input name="area" placeholder="Neighbourhood or district"></label></div>
+    <label><input type="checkbox" name="consent" required>I agree to the <a href="terms.html" target="_blank" rel="noopener">Terms of Use</a> and have read the <a href="privacy.html" target="_blank" rel="noopener">Privacy Notice</a>. I agree that Platter may collect and use my information as described in it.</label>
+    <div id="aerr" class="err"></div><button class="btn" style="width:100%">Continue</button></form></div>`;
+  const role = $('#role'); role.onchange = () => $('#pfields').hidden = role.value !== 'artisan'; role.onchange();
+  $('#ff').onsubmit = async e => { e.preventDefault(); const f = Object.fromEntries(new FormData(e.target)); const { error } = await sb.rpc('complete_signup', { p_phone: f.phone.trim(), p_role: f.role, p_trade: f.trade || null, p_area: (f.area || '').trim() }); if (error) return $('#aerr').textContent = error.message; boot(); };
+}
 
-        // SAMPLE ARTISANS
-        const SAMPLE_ARTISANS = [
-            {
-                name: 'Kwame Mensah',
-                trade: 'Master Tiler & Mason',
-                area: 'East Legon, Osu, Cantonments',
-                experience: '8+ Years',
-                rating: '4.9 (18 jobs completed)',
-                verified: true,
-                avatar: 'KW'
-            },
-            {
-                name: 'Kofi Owusu',
-                trade: 'Cabinetry & Kitchen Fitting',
-                area: 'Spintex, Airport, Dzorwulu',
-                experience: '6 Years',
-                rating: '4.8 (14 jobs completed)',
-                verified: true,
-                avatar: 'KO'
-            },
-            {
-                name: 'Emmanuel Addo',
-                trade: 'Door Fitting & General Carpentry',
-                area: 'Tema, Sakumono, Lashibi',
-                experience: '10+ Years',
-                rating: '5.0 (22 jobs completed)',
-                verified: true,
-                avatar: 'EA'
-            }
-        ];
+/* ---------- Customer dashboard (Request a service) ---------- */
+function customerView() {
+  if (!me) { return authView('login'); }
+  view.innerHTML = `<h1>Request a provider</h1><p class="m">Tell us what you need and we will match you with a verified provider.</p>
+  <div class="note">Never pay a deposit before a provider has confirmed the job and agreed the price. Platter will never ask for your password or a code sent to your phone.</div>
+  
+  ${prefillArtisan ? `<div class="card" style="background:var(--tint);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between"><span>Target Artisan: <b>${esc(prefillArtisan)}</b></span><button class="ghost sm" data-act="clearartisan">Remove</button></div>` : ''}
 
-        let requestsData = [];
-        let myCustomerId = localStorage.getItem('platter_customer_id') || 'cust_' + Math.random().toString(36).substr(2, 9);
-        localStorage.setItem('platter_customer_id', myCustomerId);
-        let selectedArtisan = null;
+  <form class="card" id="rf" style="margin-top:14px">
+    <label>Service<select name="category" required>${opts(TRADES, prefillCategory)}</select></label>
+    <label>What needs doing?<textarea name="description" rows="3" placeholder="For example: floor tiles for a kitchen, about 12 m². Not sure yet? You can leave this blank."></textarea></label>
+    <div class="row"><label class="grow">Area<input name="area" placeholder="Neighbourhood or district"></label>
+    <label class="grow">Preferred date<input name="preferred_date" type="date"></label></div>
+    <div id="movefields" hidden class="card" style="background:#F1F8F6;margin-bottom:12px"><b>Transport details</b>
+      <label style="margin-top:10px">Collect from (shop or supplier)<input name="mv_from" maxlength="200"></label>
+      <label>Deliver to<input name="mv_to" maxlength="200" placeholder="Address or landmark"></label>
+      <label>What are you moving, and roughly how many?<input name="mv_items" maxlength="200" placeholder="For example: 30 boxes of floor tiles"></label>
+      <label>Vehicle<select name="mv_vehicle"><option>Any suitable vehicle</option><option>Pickup</option><option>Truck</option></select></label>
+      <label><input type="checkbox" name="mv_help">I need help loading and unloading</label></div>
+    <label><input type="checkbox" name="consent" required>I agree to share my name, phone number, area, and job details with the provider matched to this request. I understand I can ask Platter to delete my information at any time.</label>
+    <button class="btn">Send request</button>
+  </form>
+  ${accountBox()}`;
+  
+  $('#rf').onsubmit = async e => {
+    e.preventDefault(); const f = new FormData(e.target);
+    const { error } = await sb.from('job_requests').insert({ category: f.get('category'), description: f.get('description').trim(), area: f.get('area').trim(), preferred_date: f.get('preferred_date') || null, details: moveDetails(f), consent_to_share_at: new Date().toISOString() });
+    if (error) return flash(error.message, true);
+    flash('Request sent.'); prefillCategory = ''; prefillArtisan = ''; go('mine');
+  };
+  const cs = $('#rf select[name=category]'); cs.onchange = () => $('#movefields').hidden = cs.value !== MOVE; cs.onchange();
+}
 
-        // REALTIME LISTENER
-        db.collection("requests").orderBy("createdAt", "desc").onSnapshot(snapshot => {
-            requestsData = [];
-            snapshot.forEach(doc => requestsData.push({ id: doc.id, ...doc.data() }));
-            renderMyRequests();
-            renderAdminView();
-        });
+/* ---------- My requests tab ---------- */
+async function myRequestsView() {
+  if (!me) return authView('login');
+  view.innerHTML = `<h1>My requests</h1><div id="mine" class="list"><p class="m">Loading…</p></div>${accountBox()}`;
+  loadMine();
+}
 
-        // NAVIGATION SWITCHER
-        function switchMainTab(tab) {
-            document.getElementById('secDiscover').classList.add('hidden');
-            document.getElementById('secArtisans').classList.add('hidden');
-            document.getElementById('secRequest').classList.add('hidden');
-            document.getElementById('secRequests').classList.add('hidden');
-            document.getElementById('secAdmin').classList.add('hidden');
+async function loadMine() {
+  const { data, error } = await sb.from('job_requests').select('*,artisan:profiles!artisan_id(full_name,phone)').eq('customer_id', me.id).order('created_at', { ascending: false });
+  const box = $('#mine'); if (!box) return; if (error) return box.innerHTML = `<p class="err">${esc(error.message)}</p>`;
+  if (!data.length) return box.innerHTML = '<p class="m">No requests yet. Send your first one from the Request Service tab.</p>';
+  box.innerHTML = data.map(r => {
+    const act = (s, l, c = 'btn') => `<button class="${c} sm" data-act="status" data-id="${r.id}" data-val="${s}">${l}</button>`;
+    let b = '';
+    if (r.status === 'accepted') b += act('booked', 'Confirm booking');
+    if (['booked','awaiting_confirmation'].includes(r.status)) b += act('completed', 'Mark completed');
+    if (!['completed','cancelled'].includes(r.status)) b += act('cancelled', 'Cancel request', 'ghost');
+    const edit = r.status === 'needs_clarification' ? `<form data-edit="${r.id}" class="row" style="margin-top:10px"><label class="grow">Area<input name="area" value="${esc(r.area)}" placeholder="Neighbourhood or district" required></label><label class="grow">Details<input name="description" value="${esc(r.description)}"></label><label class="grow">Date<input name="preferred_date" type="date" value="${esc(r.preferred_date || '')}"></label><button class="btn sm">Save details</button></form>` : '';
+    return `<div class="card"><div class="row"><b class="grow">${esc(r.category)}</b>${tag(r.status)}</div>
+    <div class="m">${day(r.created_at)}${r.area ? ' · ' + esc(r.area) : ''}</div>
+    ${r.description ? `<p style="margin:8px 0">${esc(r.description)}</p>` : ''}
+    ${r.artisan ? `<p class="m">Provider: <b>${esc(r.artisan.full_name)}</b> ${tel(r.artisan.phone)}</p>` : ''}
+    ${detailsHtml(r)}${edit}<div class="row" style="margin-top:8px">${b}${r.artisan_id ? `<button class="tab sm" style="color:#8A1F1F;padding:0 6px" data-act="report" data-id="${r.id}" data-val="${r.artisan_id}">Report a problem</button>` : ''}</div></div>`;
+  }).join('');
+}
 
-            if (tab === 'discover') document.getElementById('secDiscover').classList.remove('hidden');
-            if (tab === 'artisans') document.getElementById('secArtisans').classList.remove('hidden');
-            if (tab === 'request') document.getElementById('secRequest').classList.remove('hidden');
-            if (tab === 'requests') document.getElementById('secRequests').classList.remove('hidden');
-            if (tab === 'admin') document.getElementById('secAdmin').classList.remove('hidden');
+/* ---------- Provider dashboard ---------- */
+async function providerView() {
+  if (!me) return authView('login');
+  const { data: ap } = await sb.from('artisan_profiles').select('*').eq('user_id', me.id).maybeSingle();
+  if (!ap) return view.innerHTML = me.role === 'admin'
+    ? '<h1>Provider view</h1><p class="m">You do not have a provider profile yet.</p><button class="btn" data-act="mkprov">Create my provider profile</button>'
+    : '<p>No provider profile found.</p>';
+  const note = { pending: 'Waiting for approval. You will receive requests once Platter approves your profile.', approved: 'Approved. You can receive requests.', rejected: 'Your profile was not approved. Contact Platter for help.' }[ap.verification_status];
+  view.innerHTML = `<h1>My provider profile</h1><p><span class="tag ${ap.verification_status === 'approved' ? 'good' : 'warn'}">${esc(note)}</span></p>
+  <div class="note">Agree the price before you start. Never share your password or a code sent to your phone, and tell Platter if a customer behaves badly.</div>
+  <form class="card" id="pf"><div class="row"><label class="grow">Trade<select name="trade">${opts(TRADES, ap.trade)}</select></label>
+  <label class="grow">Area you cover<input name="area" value="${esc(ap.area)}"></label>
+  <label class="grow">Starting rate (GHS)<input name="starting_rate" type="number" min="0" step="1" value="${esc(ap.starting_rate ?? '')}"></label></div>
+  <label>About your work<textarea name="bio" rows="2">${esc(ap.bio)}</textarea></label>
+  <label><input type="checkbox" name="is_available"${ap.is_available ? ' checked' : ''}>I am available for new jobs</label>
+  <button class="btn">Save profile</button></form>
+  <h2>My requests</h2><div id="jobs" class="list"><p class="m">Loading…</p></div>${accountBox()}`;
+  $('#pf').onsubmit = async e => {
+    e.preventDefault(); const f = new FormData(e.target);
+    const { error } = await sb.from('artisan_profiles').update({ trade: f.get('trade'), area: f.get('area').trim(), bio: f.get('bio').trim(), starting_rate: f.get('starting_rate') === '' ? null : Number(f.get('starting_rate')), is_available: f.get('is_available') === 'on' }).eq('user_id', me.id);
+    flash(error ? error.message : 'Profile saved.', !!error);
+  };
+  const { data, error } = await sb.from('job_requests').select('*,customer:profiles!customer_id(full_name,phone)').eq('artisan_id', me.id).order('created_at', { ascending: false });
+  const box = $('#jobs'); if (error) return box.innerHTML = `<p class="err">${esc(error.message)}</p>`;
+  if (!data.length) return box.innerHTML = '<p class="m">No requests yet. They appear here once Platter matches you.</p>';
+  box.innerHTML = data.map(r => {
+    const act = (s, l, c = 'btn') => `<button class="${c} sm" data-act="status" data-id="${r.id}" data-val="${s}">${l}</button>`;
+    const b = r.status === 'pending' ? act('accepted', 'Accept') + act('declined', 'Decline', 'ghost') : r.status === 'booked' ? act('awaiting_confirmation', 'Mark work done') : '';
+    return `<div class="card"><div class="row"><b class="grow">${esc(r.category)}</b>${tag(r.status)}</div>
+    <div class="m">${day(r.created_at)}${r.area ? ' · ' + esc(r.area) : ''}${r.preferred_date ? ' · wanted by ' + esc(r.preferred_date) : ''}</div>
+    ${r.description ? `<p style="margin:8px 0">${esc(r.description)}</p>` : ''}
+    ${r.customer ? `<p class="m">Customer: <b>${esc(r.customer.full_name)}</b> ${tel(r.customer.phone)}</p>` : ''}
+    ${detailsHtml(r)}<div class="row" style="margin-top:8px">${b}<button class="tab sm" style="color:#8A1F1F;padding:0 6px" data-act="report" data-id="${r.id}" data-val="${r.customer_id}">Report a problem</button></div></div>`;
+  }).join('');
+}
 
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
+/* ---------- Admin dashboard ---------- */
+let adm = null, q = '', catF = 'all', layout = 'list';
+async function adminView() {
+  if (!me || me.role !== 'admin') return authView('login');
+  view.innerHTML = '<p class="m">Loading…</p>';
+  const [rq, pv, dl, rp] = await Promise.all([
+    sb.from('job_requests').select('*,customer:profiles!customer_id(full_name,phone),artisan:profiles!artisan_id(full_name)').order('created_at', { ascending: false }),
+    sb.from('artisan_profiles').select('*,p:profiles!user_id(full_name,phone,is_suspended)').order('created_at', { ascending: false }),
+    sb.from('profiles').select('id,full_name,phone,role,deletion_requested_at').not('deletion_requested_at', 'is', null),
+    sb.from('reports').select('*,reporter:profiles!reporter_id(full_name),reported:profiles!reported_id(full_name,phone)').eq('status', 'open').order('created_at', { ascending: false })]);
+  const err = rq.error || pv.error; if (err) return flash(err.message, true);
+  adm = { reqs: rq.data, pros: pv.data, dels: dl.data || [], reps: rp.data || [] };
+  window._reqs = adm.reqs;
+  const n = f => adm.reqs.filter(f).length;
+  const provs = adm.pros.map(p => { const sus = p.p?.is_suspended; return `<div class="card row"><div class="grow"><b>${esc(p.p?.full_name)}</b> ${tel(p.p?.phone)}<div class="m">${esc(p.trade)} · ${esc(p.area) || 'No area yet'} · ${p.is_available ? 'Available' : 'Busy'}</div></div>
+    <span class="tag ${sus || p.verification_status === 'rejected' ? 'gray' : p.verification_status === 'approved' ? 'good' : 'warn'}">${sus ? 'suspended' : esc(p.verification_status)}</span>
+    ${!sus && p.verification_status !== 'approved' ? `<button class="btn sm" data-act="verify" data-id="${p.user_id}" data-val="approved">Approve</button>` : ''}
+    ${!sus && p.verification_status !== 'rejected' ? `<button class="ghost sm" data-act="verify" data-id="${p.user_id}" data-val="rejected">Reject</button>` : ''}
+    <button class="ghost sm" data-act="suspend" data-id="${p.user_id}" data-val="${sus ? 'false' : 'true'}">${sus ? 'Reinstate' : 'Suspend'}</button></div>`; }).join('');
+  const reps = adm.reps.map(r => `<div class="card"><div class="row"><b class="grow">${esc(r.reported?.full_name || 'Unknown person')}</b><span class="m">${day(r.created_at)}</span></div>
+    <p style="margin:6px 0">${esc(r.reason)}</p><div class="m">Reported by ${esc(r.reporter?.full_name)} ${tel(r.reported?.phone)}</div>
+    <div class="row" style="margin-top:8px"><button class="ghost sm" data-act="resolve" data-id="${r.id}">Mark resolved</button>${r.reported_id ? `<button class="btn sm" data-act="suspend" data-id="${r.reported_id}" data-val="true">Suspend person</button>` : ''}</div></div>`).join('');
+  const dels = adm.dels.map(d => `<div class="card row"><div class="grow"><b>${esc(d.full_name)}</b> ${tel(d.phone)}<div class="m">${esc(d.role)} · requested ${day(d.deletion_requested_at)}</div></div><button class="ghost sm" data-act="erase" data-id="${d.id}">Erase now</button></div>`).join('');
+  view.innerHTML = `<h1>Admin</h1>
+  <div class="stats"><div class="card"><b>${adm.reqs.length}</b><span class="m">Requests</span></div>
+  <div class="card"><b>${n(r => r.status === 'needs_clarification')}</b><span class="m">Need details</span></div>
+  <div class="card"><b>${n(r => r.status === 'submitted')}</b><span class="m">Waiting for a match</span></div>
+  <div class="card"><b>${n(r => ['pending','accepted','booked','awaiting_confirmation'].includes(r.status))}</b><span class="m">With providers</span></div>
+  <div class="card"><b>${n(r => r.status === 'completed')}</b><span class="m">Completed</span></div>
+  <div class="card"><b>${adm.reps.length}</b><span class="m">Open reports</span></div></div>
+  <div class="toolbar" role="search">
+    <input id="q" type="search" placeholder="Search name, area or service" aria-label="Search requests" value="${esc(q)}">
+    <select id="flt" aria-label="Filter by status"><option value="all">All statuses</option>${Object.keys(ST).map(s => `<option value="${s}"${s === filter ? ' selected' : ''}>${ST[s][0]}</option>`).join('')}</select>
+    <select id="cat" aria-label="Filter by service"><option value="all">All services</option>${TRADES.map(t => `<option value="${esc(t)}"${t === catF ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select>
+    <button class="toolbtn" data-act="reset">Reset filters</button>
+    <span class="seg"><button data-act="layout" data-val="list" class="${layout === 'list' ? 'on' : ''}">List</button><button data-act="layout" data-val="grid" class="${layout === 'grid' ? 'on' : ''}">Cards</button></span>
+    <button class="toolbtn" data-act="csv">Download CSV</button>
+  </div>
+  <div id="results"></div>
+  ${adm.reps.length ? `<h2>Reports</h2><div class="list">${reps}</div>` : ''}
+  ${adm.dels.length ? `<h2>Deletion requests</h2><div class="list">${dels}</div>` : ''}
+  <h2>Providers</h2><div class="list">${provs || '<p class="m">No providers yet.</p>'}</div>`;
+  $('#q').oninput = e => { q = e.target.value; drawResults(); };
+  $('#flt').onchange = e => { filter = e.target.value; drawResults(); };
+  $('#cat').onchange = e => { catF = e.target.value; drawResults(); };
+  drawResults();
+}
+function assignCtl(r, ok) {
+  const pool = ok.filter(p => p.trade === r.category), list = pool.length ? pool : ok;
+  return `<select id="as-${r.id}" aria-label="Provider"><option value="">Choose provider</option>${list.map(p => `<option value="${p.user_id}"${p.user_id === r.artisan_id ? ' selected' : ''}>${esc(p.p?.full_name)} (${esc(p.trade)})</option>`).join('')}</select><button class="ghost sm" style="margin-top:6px" data-act="assign" data-id="${r.id}">Assign</button>`;
+}
+function statusCtl(r) {
+  return `<select id="st-${r.id}" aria-label="Status">${Object.keys(ST).map(s => `<option value="${s}"${s === r.status ? ' selected' : ''}>${ST[s][0]}</option>`).join('')}</select><button class="ghost sm" style="margin-top:6px" data-act="setstatus" data-id="${r.id}">Set status</button>`;
+}
+function drawResults() {
+  const ok = adm.pros.filter(p => p.verification_status === 'approved' && !p.p?.is_suspended);
+  const s = q.trim().toLowerCase();
+  const shown = adm.reqs.filter(r => (filter === 'all' || r.status === filter) && (catF === 'all' || r.category === catF) && (!s || [r.customer?.full_name, r.area, r.category, r.description].join(' ').toLowerCase().includes(s)));
+  const box = $('#results');
+  if (!shown.length) { box.innerHTML = '<div class="card"><p class="m">No requests match these filters.</p></div>'; return; }
+  if (layout === 'grid') {
+    box.innerHTML = `<div class="gridv">${shown.map(r => `<div class="card"><div class="row"><b class="grow">${esc(r.category)}</b>${tag(r.status)}</div><div class="m">${day(r.created_at)} · ${esc(r.area) || 'No area yet'}</div><p style="margin:6px 0"><b>${esc(r.customer?.full_name || '')}</b> ${tel(r.customer?.phone)}</p>${detailsHtml(r)}${assignCtl(r, ok)}<div style="margin-top:8px">${statusCtl(r)}</div></div>`).join('')}</div>`;
+    return;
+  }
+  box.innerHTML = `<div class="card tw"><table><tr><th>Date</th><th>Service</th><th>Customer</th><th>Status</th><th>Provider</th><th>Change status</th></tr>${shown.map(r => `<tr><td>${day(r.created_at)}</td><td>${esc(r.category)}${detailsHtml(r)}</td>
+    <td><b>${esc(r.customer?.full_name || '')}</b><div class="m">${esc(r.area) || 'No area yet'} ${tel(r.customer?.phone)}</div></td><td>${tag(r.status)}</td><td>${assignCtl(r, ok)}</td><td>${statusCtl(r)}</td></tr>`).join('')}</table></div>`;
+}
 
-        // RENDER DISCOVER PROJECTS
-        function renderDiscoverFeed(filter = 'all') {
-            const grid = document.getElementById('projectsGrid');
-            const filtered = filter === 'all' ? SAMPLE_PROJECTS : SAMPLE_PROJECTS.filter(p => p.trade === filter);
+/* ---------- Actions ---------- */
+const rpc = async (fn, args) => { const { error } = await sb.rpc(fn, args); if (error) throw error; };
+const actions = {
+  status: async (id, val) => { await rpc('set_request_status', { p_id: id, p_status: val }); flash('Updated.'); go(tab); },
+  assign: async id => { const v = $('#as-' + id).value; if (!v) throw new Error('Choose a provider first.'); await rpc('admin_assign', { p_id: id, p_artisan: v }); flash('Provider assigned.'); go(tab); },
+  setstatus: async id => { await rpc('set_request_status', { p_id: id, p_status: $('#st-' + id).value }); flash('Status updated.'); go(tab); },
+  verify: async (id, val) => { await rpc('admin_set_verification', { p_user: id, p_status: val }); flash('Provider ' + val + '.'); go(tab); },
+  reset: async () => { q = ''; filter = 'all'; catF = 'all'; $('#q').value = ''; $('#flt').value = 'all'; $('#cat').value = 'all'; drawResults(); },
+  layout: async (id, val) => { layout = val; document.querySelectorAll('.seg button').forEach(x => x.classList.toggle('on', x.dataset.val === val)); drawResults(); },
+  report: async (id, val) => { const reason = prompt('What went wrong? Please describe it in a few words (max 500 characters).'); if (!reason || reason.trim().length < 3) return; const { error } = await sb.from('reports').insert({ request_id: id, reported_id: val, reason: reason.trim().slice(0, 500) }); if (error) throw error; flash('Thank you. Platter will look into this.'); },
+  resolve: async id => { await rpc('admin_resolve_report', { p_id: id }); flash('Report resolved.'); go(tab); },
+  suspend: async (id, val) => { const on = val === 'true'; if (on && !confirm('Suspend this person? They will not be able to use Platter.')) return; await rpc('admin_suspend', { p_user: id, p_suspend: on }); flash(on ? 'Person suspended.' : 'Person reinstated.'); go(tab); },
+  deleteme: async () => { if (!confirm('Ask Platter to delete your account and information?')) return; await rpc('request_account_deletion', {}); me.deletion_requested_at = new Date().toISOString(); flash('Request sent. Platter will delete your information.'); go(tab); },
+  erase: async id => { if (!confirm('Erase this person and their requests? This cannot be undone.')) return; await rpc('admin_erase_user', { p_user: id }); flash('Person erased.'); go(tab); },
+  mkprov: async () => { const { error } = await sb.from('artisan_profiles').insert({ user_id: me.id }); if (error) throw error; go(tab); },
+  projflt: async (id, val) => { projFilter = val; discoverView(); },
+  reqproj: async (id, dataset) => {
+    prefillCategory = dataset.cat;
+    prefillArtisan = dataset.art;
+    if (!me) return authView('login');
+    go('customer');
+  },
+  clearartisan: async () => { prefillArtisan = ''; customerView(); },
+  csv: async () => {
+    const q = s => `"${String(s ?? '').replace(/"/g, '""')}"`;
+    const lines = [['Date','Service','Customer','Phone','Area','Status','Provider','Description'].join(',')].concat((window._reqs || []).map(r => [r.created_at, r.category, r.customer?.full_name, r.customer?.phone, r.area, r.status, r.artisan?.full_name, r.description].map(q).join(',')));
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([lines.join('\n')], { type: 'text/csv' })); a.download = 'platter_requests.csv'; a.click();
+  }
+};
 
-            grid.innerHTML = filtered.map(p => `
-                <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition flex flex-col">
-                    <div class="relative h-48 overflow-hidden bg-slate-100">
-                        <img src="${p.image}" alt="${p.title}" class="w-full h-full object-cover">
-                        <span class="absolute top-3 left-3 bg-teal-900/80 backdrop-blur-md text-teal-100 text-[11px] font-bold px-2.5 py-1 rounded-full border border-teal-700">
-                            ${p.category}
-                        </span>
-                    </div>
-                    <div class="p-5 flex-1 flex flex-col justify-between space-y-3">
-                        <div class="space-y-1">
-                            <h3 class="font-bold text-slate-900 text-base leading-snug">${p.title}</h3>
-                            <p class="text-slate-500 text-xs line-clamp-2">${p.description}</p>
-                        </div>
-                        <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
-                            <div>
-                                <div class="text-xs font-bold text-slate-800">${p.artisanName}</div>
-                                <div class="text-[10px] text-slate-400"><i class="fa-solid fa-location-dot text-rose-500"></i> ${p.location}</div>
-                            </div>
-                            <button onclick="requestProjectService('${p.category}', '${p.artisanName}')" class="bg-teal-50 hover:bg-teal-100 text-teal-700 font-bold text-xs px-3 py-2 rounded-xl transition flex items-center gap-1">
-                                <span>Request This</span>
-                                <i class="fa-solid fa-arrow-right text-[10px]"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-go],[data-act]'); if (!b) return;
+  if (b.dataset.go) return ['login','signup'].includes(b.dataset.go) ? authView(b.dataset.go) : go(b.dataset.go);
+  b.disabled = true;
+  try { await actions[b.dataset.act](b.dataset.id, b.dataset); } catch (err) { flash(err.message || 'Something went wrong.', true); }
+  b.disabled = false;
+});
 
-        function filterProjects(trade) {
-            document.querySelectorAll('.project-filter-btn').forEach(btn => {
-                btn.className = "project-filter-btn px-4 py-2 rounded-full bg-white text-slate-700 border border-slate-200 hover:border-teal-500";
-            });
-            event.currentTarget.className = "project-filter-btn px-4 py-2 rounded-full bg-teal-600 text-white shadow-sm border border-teal-600";
-            renderDiscoverFeed(trade);
-        }
-
-        // RENDER ARTISANS
-        function renderArtisans() {
-            const list = document.getElementById('artisansList');
-            list.innerHTML = SAMPLE_ARTISANS.map(a => `
-                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex space-x-4 items-center">
-                    <div class="w-14 h-14 rounded-full bg-teal-100 text-teal-800 font-black text-lg flex items-center justify-center border-2 border-teal-500 flex-shrink-0">
-                        ${a.avatar}
-                    </div>
-                    <div class="flex-1 space-y-1">
-                        <div class="flex items-center justify-between">
-                            <h3 class="font-bold text-slate-900 text-base">${a.name}</h3>
-                            <span class="text-[10px] bg-teal-50 text-teal-700 font-bold px-2 py-0.5 rounded-full border border-teal-200"><i class="fa-solid fa-check"></i> Verified</span>
-                        </div>
-                        <p class="text-xs text-slate-600 font-medium">${a.trade}</p>
-                        <div class="text-[11px] text-slate-400"><i class="fa-solid fa-location-dot text-rose-500 mr-1"></i>${a.area}</div>
-                        <div class="text-[11px] text-amber-500 font-bold"><i class="fa-solid fa-star mr-1"></i>${a.rating}</div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        // REQUEST ACTION FROM PROJECT
-        function requestProjectService(category, artisanName) {
-            document.getElementById('reqCategory').value = category;
-            selectedArtisan = artisanName;
-            document.getElementById('preferredArtisanName').innerText = artisanName;
-            document.getElementById('preferredArtisanBanner').classList.remove('hidden');
-            switchMainTab('request');
-        }
-
-        function clearPreferredArtisan() {
-            selectedArtisan = null;
-            document.getElementById('preferredArtisanBanner').classList.add('hidden');
-        }
-
-        async function handleRequestSubmit(e) {
-            e.preventDefault();
-            const newReq = {
-                category: document.getElementById('reqCategory').value,
-                description: document.getElementById('reqDescription').value,
-                neighborhood: document.getElementById('reqArea').value,
-                contact: document.getElementById('reqPhone').value,
-                preferredArtisan: selectedArtisan || 'Any Matched Artisan',
-                customerId: myCustomerId,
-                status: 'needs_clarification',
-                createdAt: firebase.firestore.Timestamp.now()
-            };
-
-            await db.collection("requests").add(newReq);
-            document.getElementById('serviceRequestForm').reset();
-            clearPreferredArtisan();
-            switchMainTab('requests');
-        }
-
-        function renderMyRequests() {
-            const mine = requestsData.filter(r => r.customerId === myCustomerId);
-            document.getElementById('myReqCount').innerText = mine.length;
-            const list = document.getElementById('myRequestsList');
-
-            if (mine.length === 0) {
-                list.innerHTML = `<div class="bg-white p-8 rounded-2xl border border-slate-200 text-center text-slate-400 text-xs">You have no active service requests.</div>`;
-                return;
-            }
-
-            list.innerHTML = mine.map(r => `
-                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2">
-                    <div class="flex justify-between items-start">
-                        <span class="font-bold text-slate-900 text-sm"><i class="fa-solid fa-wrench text-teal-600 mr-1.5"></i>${r.category}</span>
-                        <span class="text-xs bg-amber-100 text-amber-800 font-bold px-2.5 py-0.5 rounded-full">${r.status.replace('_', ' ')}</span>
-                    </div>
-                    <p class="text-xs text-slate-600">${r.description}</p>
-                    <div class="text-[11px] text-slate-400 flex justify-between pt-2 border-t border-slate-100">
-                        <span><i class="fa-solid fa-location-dot mr-1"></i>${r.neighborhood}</span>
-                        <span>Assigned: ${r.preferredArtisan}</span>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function renderAdminView() {
-            document.getElementById('admTotal').innerText = requestsData.length;
-            document.getElementById('admClarify').innerText = requestsData.filter(r => r.status === 'needs_clarification').length;
-            document.getElementById('admMatching').innerText = requestsData.filter(r => r.status === 'matching').length;
-            document.getElementById('admCompleted').innerText = requestsData.filter(r => r.status === 'completed').length;
-
-            const list = document.getElementById('adminRequestsList');
-            if (requestsData.length === 0) {
-                list.innerHTML = `<div class="bg-white p-8 rounded-2xl text-center text-slate-400 text-xs">No active pipeline data.</div>`;
-                return;
-            }
-
-            list.innerHTML = requestsData.map(r => `
-                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <span class="font-bold text-slate-900 text-sm">${r.category}</span>
-                            <span class="text-xs text-slate-400 ml-2">#${r.id.substr(0, 5)}</span>
-                        </div>
-                        <span class="text-xs bg-teal-100 text-teal-800 font-bold px-2.5 py-0.5 rounded-full">${r.status}</span>
-                    </div>
-                    <p class="text-xs text-slate-600">${r.description}</p>
-                    <div class="text-xs text-slate-500 flex justify-between">
-                        <span><strong>Area:</strong> ${r.neighborhood}</span>
-                        <span><strong>Phone:</strong> ${r.contact}</span>
-                    </div>
-                    <div class="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
-                        <span class="text-[11px] font-semibold text-slate-500">Update Stage:</span>
-                        <select onchange="updateJobStatus('${r.id}', this.value)" class="text-xs border border-slate-300 rounded px-2 py-1 focus:ring-1 focus:ring-teal-500 bg-slate-50 font-medium">
-                            <option value="needs_clarification" ${r.status==='needs_clarification'?'selected':''}>Needs Clarification</option>
-                            <option value="ready_for_review" ${r.status==='ready_for_review'?'selected':''}>Ready for Review</option>
-                            <option value="matching" ${r.status==='matching'?'selected':''}>Matching</option>
-                            <option value="booking" ${r.status==='booking'?'selected':''}>Booking</option>
-                            <option value="completed" ${r.status==='completed'?'selected':''}>Completed</option>
-                        </select>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        async function updateJobStatus(docId, newStatus) {
-            await db.collection("requests").doc(docId).update({ status: newStatus });
-        }
-
-        // ADMIN PASSCODE AUTH
-        function openAdminAuthModal() {
-            document.getElementById('adminPasscode').value = '';
-            document.getElementById('adminAuthError').classList.add('hidden');
-            document.getElementById('adminAuthModal').classList.remove('hidden');
-        }
-
-        function closeAdminAuthModal() {
-            document.getElementById('adminAuthModal').classList.add('hidden');
-        }
-
-        function verifyAdminPasscode() {
-            const code = document.getElementById('adminPasscode').value;
-            if (code === 'admin123') {
-                closeAdminAuthModal();
-                switchMainTab('admin');
-            } else {
-                document.getElementById('adminAuthError').classList.remove('hidden');
-            }
-        }
-
-        function exportCSV() {
-            if (requestsData.length === 0) return alert('No data to export.');
-            let csv = 'ID,Category,Description,Neighborhood,Contact,Status\n';
-            requestsData.forEach(r => csv += `"${r.id}","${r.category}","${r.description.replace(/"/g, '""')}","${r.neighborhood}","${r.contact}","${r.status}"\n`);
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.setAttribute('href', url);
-            a.setAttribute('download', 'platter_metrics.csv');
-            a.click();
-        }
-
-        // INIT
-        renderDiscoverFeed('all');
-        renderArtisans();
-    </script>
+document.addEventListener('submit', async e => {
+  const f = e.target; if (!f.dataset.edit) return; e.preventDefault(); const d = new FormData(f);
+  const { error } = await sb.rpc('update_my_request', { p_id: f.dataset.edit, p_description: d.get('description').trim(), p_area: d.get('area').trim(), p_date: d.get('preferred_date') || null });
+  if (error) return flash(error.message, true);
+  flash('Details saved.'); go(tab);
+});
+</script>
 </body>
 </html>
