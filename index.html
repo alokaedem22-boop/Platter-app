@@ -56,7 +56,12 @@ header .tab{padding:0 9px;white-space:nowrap;font-size:13px}#out{margin-left:aut
 <body>
 <header>
   <button class="logo-btn" id="home" aria-label="Platter home"><img id="logo" src="platter-wordmark-white.png" alt="Platter" onerror="this.outerHTML='<b>Platter.</b>'"></button>
-  <nav id="nav"></nav>
+  <nav>
+  <button class="tab tab-btn on" data-go="discover"><i class="fa-solid fa-house"></i> Home</button>
+  <button class="tab tab-btn" data-go="artisans"><i class="fa-solid fa-hard-hat"></i> Artisans</button>
+  <button class="tab tab-btn" data-go="mine"><i class="fa-solid fa-clipboard-list"></i> My Requests</button>
+  <button class="tab tab-btn" data-go="userprofile"><i class="fa-solid fa-user"></i> Profile</button>
+</nav>
   <button class="tab" id="out" hidden>Log out</button>
 </header>
 <main><div id="msg" role="status" aria-live="polite"></div><div id="view"></div></main>
@@ -66,7 +71,13 @@ header .tab{padding:0 9px;white-space:nowrap;font-size:13px}#out{margin-left:aut
 const MOVE = 'Pickup & goods transport';
 const TRADES = ['Tiling','Kitchen cabinet installation','Door installation','Bathroom fitting & plumbing', MOVE];
 const ST = {draft:['Draft',''],needs_clarification:['Needs details','warn'],submitted:['Waiting for a match',''],pending:['Sent to provider',''],accepted:['Provider interested',''],declined:['Declined','gray'],booked:['Booked',''],awaiting_confirmation:['Work done, please confirm','warn'],completed:['Completed','good'],cancelled:['Cancelled','gray'],disputed:['Disputed','warn']};
-
+  // Sample database for verified artisans
+const SAMPLE_ARTISANS = [
+  { name: 'Kofi Owusu', category: 'Kitchen cabinet installation', location: 'Accra' },
+  { name: 'Kwame Mensah', category: 'Tiling', location: 'East Legon, Accra' },
+  { name: 'Aboagye Doors', category: 'Door installation', location: 'Kumasi' },
+  { name: 'Emmanuel Asante', category: 'Bathroom fitting & plumbing', location: 'Spintex, Accra' }
+];
 // Behance-style Sample Portfolio Showcase Projects
 const SAMPLE_PROJECTS = [
   {
@@ -128,21 +139,35 @@ function boot() {
   go('discover');
 }
 
-function go(t) {
-  tab = t; flash('');
-  $('#home').classList.toggle('on', t === 'discover');
+ function go(targetTab) {
+  // Auth guard: If user is not logged in and tries to access restricted tabs
+  if (!me && (targetTab === 'mine' || targetTab === 'userprofile')) {
+    showSignInModal(targetTab); 
+    return;
+  }
   
-  $('#nav').innerHTML = [
-    ['discover','Discover'],
-    ['customer','Request Service'],
-    ['mine','My Requests'],
-    ['provider','Provider Portal']
-  ].map(([k,l]) => `<button class="tab${k===t?' on':''}" data-go="${k}">${l}</button>`).join('');
-
-  const views = { discover: discoverView, customer: customerView, mine: myRequestsView, provider: providerView };
-  if (views[t]) views[t]();
+  tab = targetTab;
+  flash('');
+  
+  // Updates active tab styling on navigation
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.toggle('on', b.getAttribute('data-go') === targetTab);
+  });
+  
+  // Renders the correct view safely
+  if (views[targetTab]) {
+    views[targetTab]();
+  }
+  
+  window.scrollTo(0, 0);
 }
-
+const views = { 
+  discover: discoverView, 
+  artisans: artisansView, 
+  customer: customerView, 
+  mine: myRequestsView, 
+  profile: profileView 
+};
 $('#home').onclick = () => go('discover');
 
 /* ---------- Discover Feed (Behance-style project showcase) ---------- */
@@ -189,6 +214,30 @@ function discoverView() {
   `;
 }
 
+  // Add right below discoverView()
+function artisansView() {
+  const categories = ['All', 'Tiling', 'Kitchen Cabinets', 'Doors', 'Plumbing', 'Electrical'];
+  view.innerHTML = `
+    <h2>Verified Artisans</h2>
+    <div style="margin-bottom:14px;display:flex;gap:8px;overflow-x:auto;padding-bottom:6px">
+      ${categories.map(c => `<button class="btn sm ${selectedCat===c?'':'ghost'}" data-artcat="${c}">${c}</button>`).join('')}
+    </div>
+    <div class="list">
+      ${SAMPLE_ARTISANS.map(a => `
+        <div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0">
+            <div style="width:48px;height:48px;border-radius:50%;background:var(--tint);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--deep);flex-shrink:0">
+              ${a.name.charAt(0)}
+            </div>
+            <div style="flex:1;min-width:0">
+  <b style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px">${esc(a.name)}</b>
+  <div class="m" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(a.category)} · <i class="fa-solid fa-location-dot" style="color:#e11d48"></i> ${esc(a.location)}</div>
+</div>
+<button class="btn sm ghost" data-art-profile="${esc(a.name)}">View Profile</button>
+      `).join('')}
+    </div>
+  `;
+}
 /* ---------- Customer dashboard ---------- */
 function customerView() {
   view.innerHTML = `<h1>Request a provider</h1><p class="m">Tell us what you need and we will match you with a verified provider.</p>
