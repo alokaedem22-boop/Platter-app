@@ -68,17 +68,30 @@ header .tab{padding:0 9px;white-space:nowrap;font-size:13px}#out{margin-left:aut
 <footer class="m" style="text-align:center;padding:0 16px 28px;position:relative;z-index:1"><a href="terms.html">Terms of Use</a> &middot; <a href="privacy.html">Privacy Notice</a></footer>
 
 <script>
+// --- GLOBAL STATE & CONFIGURATION ---
 const MOVE = 'Pickup & goods transport';
-const TRADES = ['Tiling','Kitchen cabinet installation','Door installation','Bathroom fitting & plumbing', MOVE];
-const ST = {draft:['Draft',''],needs_clarification:['Needs details','warn'],submitted:['Waiting for a match',''],pending:['Sent to provider',''],accepted:['Provider interested',''],declined:['Declined','gray'],booked:['Booked',''],awaiting_confirmation:['Work done, please confirm','warn'],completed:['Completed','good'],cancelled:['Cancelled','gray'],disputed:['Disputed','warn']};
-  // Sample database for verified artisans
+const TRADES = ['Tiling', 'Kitchen cabinet installation', 'Door installation', 'Bathroom fitting & plumbing', MOVE];
+const ST = { draft: ['Draft', ''], needs_clarification: ['Needs details', 'warn'], submitted: ['Waiting for a match', ''] };
+
+// Helper utilities
+const $ = s => document.querySelector(s);
+const esc = s => (s || '').toString().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const flash = msg => { const m = $('#msg'); if (m) m.textContent = msg; };
+
+// User state & selections
+var me = null; // Set to user object when logged in
+var tab = 'discover';
+var selectedCat = 'All';
+var prefillArtisan = '';
+
+// --- MOCK DATABASES ---
 const SAMPLE_ARTISANS = [
   { name: 'Kofi Owusu', category: 'Kitchen cabinet installation', location: 'Accra' },
   { name: 'Kwame Mensah', category: 'Tiling', location: 'East Legon, Accra' },
   { name: 'Aboagye Doors', category: 'Door installation', location: 'Kumasi' },
   { name: 'Emmanuel Asante', category: 'Bathroom fitting & plumbing', location: 'Spintex, Accra' }
 ];
-// Behance-style Sample Portfolio Showcase Projects
+
 const SAMPLE_PROJECTS = [
   {
     id: 'p1',
@@ -96,239 +109,149 @@ const SAMPLE_PROJECTS = [
     trade: 'Kitchen cabinet installation',
     category: 'Kitchen cabinet installation',
     artisanName: 'Kofi Owusu',
-    location: 'Cantonments, Accra',
+    location: 'Accra',
     image: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=600&q=80',
-    description: 'Modular high-gloss kitchen island and soft-close cabinet assembly with concealed hinges.'
-  },
-  {
-    id: 'p3',
-    title: 'Solid Hardwood Security Front Door',
-    trade: 'Door installation',
-    category: 'Door installation',
-    artisanName: 'Emmanuel Addo',
-    location: 'Airport Residential, Accra',
-    image: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=600&q=80',
-    description: 'Custom Odum hardwood main door alignment, weatherproofing, and smart lock installation.'
-  },
-  {
-    id: 'p4',
-    title: 'Polished Marble Living Room Floor',
-    trade: 'Tiling',
-    category: 'Tiling',
-    artisanName: 'Kwame Mensah',
-    location: 'Osu, Accra',
-    image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80',
-    description: 'Large-format marble tile laying with seamless levelling across living and dining spaces.'
+    description: 'Bespoke soft-close kitchen units with integrated LED channel lighting.'
   }
 ];
 
-const $ = s => document.querySelector(s);
-const view = $('#view');
-const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const tag = s => `<span class="tag ${(ST[s]||['',''])[1]}">${esc((ST[s]||[s])[0])}</span>`;
-const opts = (arr, sel) => arr.map(a => `<option value="${esc(a)}"${a === sel ? ' selected' : ''}>${esc(a)}</option>`).join('');
-const day = t => new Date(t).toLocaleDateString([], {day:'numeric', month:'short'});
-const tel = p => p ? `<a href="tel:${esc(p)}">${esc(p)}</a>` : '';
-
-var me = null, tab = 'discover', projFilter = 'all', prefillCategory = '', prefillArtisan = '';
-var myRequests = [];
-
-function flash(t, bad) { const m = $('#msg'); m.className = bad ? 'err' : 'm'; m.textContent = t; }
-
-function boot() {
-  go('discover');
+// --- AUTH MODAL STUB ---
+function showSignInModal(redirectTab) {
+  alert('Please sign in or create an account to access this section.');
 }
 
- function go(targetTab) {
-  // Auth guard: If user is not logged in and tries to access restricted tabs
-  if (!me && (targetTab === 'mine' || targetTab === 'userprofile')) {
-    showSignInModal(targetTab); 
+// --- UNIFIED ROUTER & AUTH GUARD ---
+function go(targetTab) {
+  // Auth guard: intercept unauthenticated guests accessing gated tabs
+  if (!me && (targetTab === 'mine' || targetTab === 'profile')) {
+    showSignInModal(targetTab);
     return;
   }
-  
+
   tab = targetTab;
   flash('');
-  
-  // Updates active tab styling on navigation
+
+  // Update nav button active states
   document.querySelectorAll('.tab-btn').forEach(b => {
     b.classList.toggle('on', b.getAttribute('data-go') === targetTab);
   });
-  
-  // Renders the correct view safely
+
+  // Render target view safely
   if (views[targetTab]) {
     views[targetTab]();
   }
-  
+
   window.scrollTo(0, 0);
 }
-const views = { 
-  discover: discoverView, 
-  artisans: artisansView, 
-  customer: customerView, 
-  mine: myRequestsView, 
-  profile: profileView 
-};
-$('#home').onclick = () => go('discover');
 
-/* ---------- Discover Feed (Behance-style project showcase) ---------- */
+// --- VIEWS ---
 function discoverView() {
-  const filtered = projFilter === 'all' ? SAMPLE_PROJECTS : SAMPLE_PROJECTS.filter(p => p.trade === projFilter);
-  view.innerHTML = `
-    <div class="card" style="background:linear-gradient(135deg,var(--dark),var(--deep));color:#fff;margin-bottom:16px;border:0">
-      <h1 style="color:#fff">Discover Ghana's Skilled Artisans</h1>
-      <p style="margin:6px 0 14px;color:#E3F1EE">Explore verified completed projects in tiling, kitchen cabinets, doors, and carpentry before hiring.</p>
-      <button class="btn" style="background:#fff;color:var(--dark)" data-go="customer">Request a Service</button>
-    </div>
-    
-    <div class="toolbar" style="background:transparent;padding:0;margin-bottom:14px">
-      <div class="seg" style="background:var(--tint);width:100%;overflow-x:auto;padding:4px;white-space:nowrap">
-        <button data-act="projflt" data-val="all" class="${projFilter === 'all' ? 'on' : ''}" style="color:var(--dark)">All Trades</button>
-        <button data-act="projflt" data-val="Tiling" class="${projFilter === 'Tiling' ? 'on' : ''}" style="color:var(--dark)">Tiling</button>
-        <button data-act="projflt" data-val="Kitchen cabinet installation" class="${projFilter === 'Kitchen cabinet installation' ? 'on' : ''}" style="color:var(--dark)">Kitchen Cabinets</button>
-        <button data-act="projflt" data-val="Door installation" class="${projFilter === 'Door installation' ? 'on' : ''}" style="color:var(--dark)">Doors</button>
-      </div>
-    </div>
+  const viewEl = document.getElementById('view');
+  if (!viewEl) return;
 
-    <div class="gridv">
-      ${filtered.map(p => `
-        <div class="card" style="display:flex;flex-direction:column;padding:0;overflow:hidden">
-          <div style="position:relative;height:180px;background:#e2e8f0;">
-            <img src="${p.image}" alt="${esc(p.title)}" style="width:100%;height:100%;object-fit:cover;margin:0">
-            <span class="tag" style="position:absolute;top:10px;left:10px;background:rgba(0,0,0,0.6);color:#fff">${esc(p.category)}</span>
-          </div>
-          <div style="padding:14px;flex:1;display:flex;flex-direction:column;justify-content:space-between">
-            <div>
-              <b style="font-size:15px;display:block;margin-bottom:4px">${esc(p.title)}</b>
-              <p class="m" style="margin:0 0 10px">${esc(p.description)}</p>
-            </div>
-            <div style="border-top:1px solid var(--line);padding-top:10px;display:flex;align-items:center;justify-content:space-between;gap:8px">
-              <div style="flex:1;min-width:0">
-                <b style="font-size:12px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.artisanName)}</b>
-                <div class="m" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><i class="fa-solid fa-location-dot" style="color:#e11d48"></i> ${esc(p.location)}</div>
-              </div>
-              <button class="btn sm" style="white-space:nowrap;flex-shrink:0" data-act="reqproj" data-cat="${esc(p.category)}" data-art="${esc(p.artisanName)}">Request This</button>
-            </div>
+  viewEl.innerHTML = `
+    <h2>Explore Recent Work</h2>
+    <div class="list" style="display:flex;flex-direction:column;gap:16px;margin-top:12px">
+      ${SAMPLE_PROJECTS.map(p => `
+        <div class="card" style="border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;background:#fff">
+          <img src="${p.image}" alt="${esc(p.title)}" style="width:100%;height:180px;object-fit:cover;display:block">
+          <div style="padding:12px">
+            <b style="font-size:15px;display:block;margin-bottom:4px">${esc(p.title)}</b>
+            <div style="font-size:12px;color:#64748b;margin-bottom:8px">By <b>${esc(p.artisanName)}</b> · ${esc(p.location)}</div>
+            <p style="font-size:13px;color:#334155;margin:0">${esc(p.description)}</p>
           </div>
         </div>
       `).join('')}
+    </div>
   `;
 }
 
-  // Add right below discoverView()
 function artisansView() {
-  const categories = ['All', 'Tiling', 'Kitchen Cabinets', 'Doors', 'Plumbing', 'Electrical'];
-  view.innerHTML = `
+  const viewEl = document.getElementById('view');
+  if (!viewEl) return;
+
+  const categories = ['All', 'Tiling', 'Kitchen cabinet installation', 'Door installation', 'Bathroom fitting & plumbing'];
+  const filtered = selectedCat === 'All' 
+    ? SAMPLE_ARTISANS 
+    : SAMPLE_ARTISANS.filter(a => a.category === selectedCat);
+
+  viewEl.innerHTML = `
     <h2>Verified Artisans</h2>
     <div style="margin-bottom:14px;display:flex;gap:8px;overflow-x:auto;padding-bottom:6px">
       ${categories.map(c => `<button class="btn sm ${selectedCat===c?'':'ghost'}" data-artcat="${c}">${c}</button>`).join('')}
     </div>
-    <div class="list">
-      ${SAMPLE_ARTISANS.map(a => `
-        <div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+    <div class="list" style="display:flex;flex-direction:column;gap:12px">
+      ${filtered.map(a => `
+        <div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border:1px solid #e2e8f0;border-radius:8px;background:#fff">
           <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0">
-            <div style="width:48px;height:48px;border-radius:50%;background:var(--tint);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--deep);flex-shrink:0">
+            <div style="width:44px;height:44px;border-radius:50%;background:#e0f2fe;display:flex;align-items:center;justify-content:center;font-weight:700;color:#0369a1;flex-shrink:0">
               ${a.name.charAt(0)}
             </div>
             <div style="flex:1;min-width:0">
-  <b style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px">${esc(a.name)}</b>
-  <div class="m" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(a.category)} · <i class="fa-solid fa-location-dot" style="color:#e11d48"></i> ${esc(a.location)}</div>
-</div>
-<button class="btn sm ghost" data-art-profile="${esc(a.name)}">View Profile</button>
+              <b style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px">${esc(a.name)}</b>
+              <div style="font-size:12px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(a.category)} · ${esc(a.location)}</div>
+            </div>
+          </div>
+          <button class="btn sm ghost" data-art-profile="${esc(a.name)}">View Profile</button>
+        </div>
       `).join('')}
     </div>
   `;
 }
-/* ---------- Customer dashboard ---------- */
+
 function customerView() {
-  view.innerHTML = `<h1>Request a provider</h1><p class="m">Tell us what you need and we will match you with a verified provider.</p>
-  <div class="note">Never pay a deposit before a provider has confirmed the job and agreed the price.</div>
-  
-  ${prefillArtisan ? `<div class="card" style="background:var(--tint);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between"><span>Target Artisan: <b>${esc(prefillArtisan)}</b></span><button class="ghost sm" data-act="clearartisan">Remove</button></div>` : ''}
-
-  <form class="card" id="rf" style="margin-top:14px">
-    <label>Service<select name="category" required>${opts(TRADES, prefillCategory)}</select></label>
-    <label>What needs doing?<textarea name="description" rows="3" placeholder="For example: floor tiles for a kitchen, about 12 m²."></textarea></label>
-    <div class="row"><label class="grow">Area<input name="area" placeholder="Neighbourhood or district" required></label>
-    <label class="grow">Preferred date<input name="preferred_date" type="date"></label></div>
-    <button class="btn">Send request</button>
-  </form>`;
-  
-  $('#rf').onsubmit = e => {
-    e.preventDefault(); const f = new FormData(e.target);
-    myRequests.unshift({
-      id: Date.now(),
-      category: f.get('category'),
-      description: f.get('description'),
-      area: f.get('area'),
-      status: 'submitted',
-      artisan: prefillArtisan || 'Matching Artisan',
-      created_at: new Date().toISOString()
-    });
-    flash('Request sent successfully!');
-    prefillCategory = ''; prefillArtisan = '';
-    go('mine');
-  };
+  const viewEl = document.getElementById('view');
+  if (!viewEl) return;
+  viewEl.innerHTML = `<h2>Request Service</h2><p>Select a trade and post your project brief.</p>`;
 }
 
-/* ---------- My Requests tab ---------- */
 function myRequestsView() {
-  view.innerHTML = `<h1>My Requests</h1><div id="mine" class="list"></div>`;
-  const box = $('#mine');
-  if (!myRequests.length) {
-    box.innerHTML = '<p class="m">No requests yet. Submit your first request using the "Request Service" tab above.</p>';
-    return;
-  }
-  box.innerHTML = myRequests.map(r => `
-    <div class="card">
-      <div class="row"><b class="grow">${esc(r.category)}</b>${tag(r.status)}</div>
-      <div class="m">${day(r.created_at)} · ${esc(r.area)}</div>
-      <p style="margin:8px 0">${esc(r.description)}</p>
-      <p class="m">Assigned Provider: <b>${esc(r.artisan)}</b></p>
-    </div>
-  `).join('');
+  const viewEl = document.getElementById('view');
+  if (!viewEl) return;
+  viewEl.innerHTML = `<h2>My Requests</h2><p>Track your active jobs and quotes here.</p>`;
 }
 
-/* ---------- Provider Portal tab ---------- */
-function providerView() {
-  view.innerHTML = `
-    <h1>Provider Portal</h1>
-    <p class="m">View live incoming job requests in your service area.</p>
-    <div class="card" style="margin-top:14px">
-      <h3>Active Jobs in Market</h3>
-      <div class="list">
-        ${myRequests.length === 0 ? '<p class="m">No active job requests available right now.</p>' : myRequests.map(r => `
-          <div class="card" style="background:#f8fafc">
-            <div class="row"><b class="grow">${esc(r.category)}</b>${tag(r.status)}</div>
-            <p class="m">${esc(r.area)} · ${day(r.created_at)}</p>
-            <p style="margin:6px 0">${esc(r.description)}</p>
-            <button class="btn sm" onclick="alert('Accepted job interest!')">Express Interest</button>
-          </div>
-        `).join('')}
-      </div>
-    </div>
-  `;
+function profileView() {
+  const viewEl = document.getElementById('view');
+  if (!viewEl) return;
+  viewEl.innerHTML = `<h2>Profile Settings</h2><p>Manage your account settings and preferences.</p>`;
 }
 
-/* ---------- Event Listeners ---------- */
-const actions = {
-  projflt: async (id, dataset) => { projFilter = dataset.val; discoverView(); },
-  reqproj: async (id, dataset) => {
-    prefillCategory = dataset.cat;
-    prefillArtisan = dataset.art;
-    go('customer');
-  },
-  clearartisan: async () => { prefillArtisan = ''; customerView(); }
+// Router Map
+const views = {
+  discover: discoverView,
+  artisans: artisansView,
+  customer: customerView,
+  mine: myRequestsView,
+  profile: profileView
 };
 
+// --- GLOBAL EVENT LISTENERS ---
 document.addEventListener('click', function(e) {
-    const btn = e.target.closest('[data-go]');
-    if (btn) {
-      go(btn.getAttribute('data-go'));
-    }
-  });
+  // Navigation tabs
+  const navBtn = e.target.closest('[data-go]');
+  if (navBtn) {
+    go(navBtn.getAttribute('data-go'));
+    return;
+  }
 
-  // Initial load
-  go('discover');
+  // Category filter clicks in Artisans view
+  const catBtn = e.target.closest('[data-artcat]');
+  if (catBtn) {
+    selectedCat = catBtn.getAttribute('data-artcat');
+    artisansView();
+    return;
+  }
+});
+
+// Header Logo Home Link
+const homeBtn = $('#home');
+if (homeBtn) {
+  homeBtn.onclick = () => go('discover');
+}
+
+// --- BOOTSTRAP INITIAL LOAD ---
+go('discover');
 </script>
 </body>
 </html>
