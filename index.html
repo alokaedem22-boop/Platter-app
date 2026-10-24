@@ -56,11 +56,11 @@ header .tab{padding:0 9px;white-space:nowrap;font-size:13px}#out{margin-left:aut
 <body>
 <header>
   <button class="logo-btn" id="home" aria-label="Platter home"><img id="logo" src="platter-wordmark-white.png" alt="Platter" onerror="this.outerHTML='<b>Platter.</b>'"></button>
-  <nav>
-  <button class="tab tab-btn on" data-go="discover"><i class="fa-solid fa-house"></i> Home</button>
-  <button class="tab tab-btn" data-go="artisans"><i class="fa-solid fa-hard-hat"></i> Artisans</button>
-  <button class="tab tab-btn" data-go="mine"><i class="fa-solid fa-clipboard-list"></i> My Requests</button>
-  <button class="tab tab-btn" data-go="userprofile"><i class="fa-solid fa-user"></i> Profile</button>
+  <nav id="nav">
+  <button class="tab-btn on" data-go="discover"><i class="fa-solid fa-house"></i> Home</button>
+  <button class="tab-btn" data-go="artisans"><i class="fa-solid fa-hard-hat"></i> Artisans</button>
+  <button class="tab-btn" data-go="mine"><i class="fa-solid fa-clipboard-list"></i> My Requests</button>
+  <button class="tab-btn" data-go="profile"><i class="fa-solid fa-user"></i> Profile</button>
 </nav>
   <button class="tab" id="out" hidden>Log out</button>
 </header>
@@ -320,13 +320,15 @@ const actions = {
   clearartisan: async () => { prefillArtisan = ''; customerView(); }
 };
 
-document.addEventListener('click', e => {
-  const b = e.target.closest('[data-go],[data-act]'); if (!b) return;
-  if (b.dataset.go) return go(b.dataset.go);
-  if (actions[b.dataset.act]) actions[b.dataset.act](b.dataset.id, b.dataset);
-});
+document.addEventListener('click', function(e) {
+    const btn = e.target.closest('[data-go]');
+    if (btn) {
+      go(btn.getAttribute('data-go'));
+    }
+  });
 
-boot();
+  // Initial load
+  go('discover');
 </script>
 </body>
 </html>
