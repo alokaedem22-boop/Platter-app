@@ -150,13 +150,13 @@ function discoverView() {
   const filtered = projFilter === 'all' ? SAMPLE_PROJECTS : SAMPLE_PROJECTS.filter(p => p.trade === projFilter);
   view.innerHTML = `
     <div class="card" style="background:linear-gradient(135deg,var(--dark),var(--deep));color:#fff;margin-bottom:16px;border:0">
-      <h1>Discover Ghana's Skilled Artisans</h1>
+      <h1 style="color:#fff">Discover Ghana's Skilled Artisans</h1>
       <p style="margin:6px 0 14px;color:#E3F1EE">Explore verified completed projects in tiling, kitchen cabinets, doors, and carpentry before hiring.</p>
       <button class="btn" style="background:#fff;color:var(--dark)" data-go="customer">Request a Service</button>
     </div>
     
     <div class="toolbar" style="background:transparent;padding:0;margin-bottom:14px">
-      <div class="seg" style="background:var(--tint);width:100%;overflow-x:auto;padding:4px">
+      <div class="seg" style="background:var(--tint);width:100%;overflow-x:auto;padding:4px;white-space:nowrap">
         <button data-act="projflt" data-val="all" class="${projFilter === 'all' ? 'on' : ''}" style="color:var(--dark)">All Trades</button>
         <button data-act="projflt" data-val="Tiling" class="${projFilter === 'Tiling' ? 'on' : ''}" style="color:var(--dark)">Tiling</button>
         <button data-act="projflt" data-val="Kitchen cabinet installation" class="${projFilter === 'Kitchen cabinet installation' ? 'on' : ''}" style="color:var(--dark)">Kitchen Cabinets</button>
@@ -176,17 +176,16 @@ function discoverView() {
               <b style="font-size:15px;display:block;margin-bottom:4px">${esc(p.title)}</b>
               <p class="m" style="margin:0 0 10px">${esc(p.description)}</p>
             </div>
-            <div style="border-top:1px solid var(--line);padding-top:10px;display:flex;align-items:center;justify-content:between">
-              <div>
-                <b style="font-size:12px">${esc(p.artisanName)}</b>
-                <div class="m"><i class="fa-solid fa-location-dot" style="color:#e11d48"></i> ${esc(p.location)}</div>
+            <div style="border-top:1px solid var(--line);padding-top:10px;display:flex;align-items:center;justify-content:space-between;gap:8px">
+              <div style="flex:1;min-width:0">
+                <b style="font-size:12px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.artisanName)}</b>
+                <div class="m" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><i class="fa-solid fa-location-dot" style="color:#e11d48"></i> ${esc(p.location)}</div>
               </div>
-              <button class="btn sm" data-act="reqproj" data-cat="${esc(p.category)}" data-art="${esc(p.artisanName)}">Request This</button>
+              <button class="btn sm" style="white-space:nowrap;flex-shrink:0" data-act="reqproj" data-cat="${esc(p.category)}" data-art="${esc(p.artisanName)}">Request This</button>
             </div>
           </div>
         </div>
       `).join('')}
-    </div>
   `;
 }
 
