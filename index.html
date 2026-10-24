@@ -143,7 +143,7 @@ const esc = s => (s || '').toString().replace(/&/g, '&amp;').replace(/</g, '&lt;
 const flash = msg => { const m = $('#msg'); if (m) m.textContent = msg; };
 
 // User state & selections
-var me = null; // Set to user object when logged in
+var me = null; 
 var tab = 'discover';
 var selectedCat = 'All';
 var prefillArtisan = '';
@@ -186,7 +186,6 @@ function showSignInModal(redirectTab) {
 
 // --- UNIFIED ROUTER & AUTH GUARD ---
 function go(targetTab) {
-  // Auth guard: intercept unauthenticated guests accessing gated tabs
   if (!me && (targetTab === 'mine' || targetTab === 'profile')) {
     showSignInModal(targetTab);
     return;
@@ -195,12 +194,10 @@ function go(targetTab) {
   tab = targetTab;
   flash('');
 
-  // Update nav button active states
   document.querySelectorAll('.tab-btn').forEach(b => {
     b.classList.toggle('on', b.getAttribute('data-go') === targetTab);
   });
 
-  // Render target view safely
   if (views[targetTab]) {
     views[targetTab]();
   }
@@ -214,15 +211,28 @@ function discoverView() {
   if (!viewEl) return;
 
   viewEl.innerHTML = `
-    <h2>Explore Recent Work</h2>
-    <div class="list" style="display:flex;flex-direction:column;gap:16px;margin-top:12px">
+    <!-- Hero Banner Section -->
+    <div style="background: linear-gradient(135deg, #115e59 0%, #0f766e 100%); color: white; padding: 20px 16px; border-radius: 12px; margin-bottom: 16px; text-align: center;">
+      <h1 style="font-size: 18px; margin: 0 0 6px 0; font-weight: 700;">Find Trusted Home Artisans in Ghana</h1>
+      <p style="font-size: 12px; margin: 0 0 14px 0; opacity: 0.9;">Verified tiling, plumbing, and cabinetry experts across Accra, Tema & Kumasi.</p>
+      <button class="btn sm" onclick="go('customer')" style="background: #ffffff; color: #115e59; font-weight: 600; border: none; padding: 6px 14px; border-radius: 6px; font-size: 12px; cursor: pointer;">Request Service</button>
+    </div>
+
+    <!-- Feed Header -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 0 2px;">
+      <h2 style="font-size: 15px; margin: 0; font-weight: 600; color: #0f172a;">Explore Recent Work</h2>
+      <span style="font-size: 11px; color: #64748b;">Live Showcase</span>
+    </div>
+
+    <!-- Compact Feed List -->
+    <div class="list" style="display: flex; flex-direction: column; gap: 12px; padding-bottom: 20px;">
       ${SAMPLE_PROJECTS.map(p => `
-        <div class="card" style="border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;background:#fff">
-          <img src="${p.image}" alt="${esc(p.title)}" style="width:100%;height:180px;object-fit:cover;display:block">
-          <div style="padding:12px">
-            <b style="font-size:15px;display:block;margin-bottom:4px">${esc(p.title)}</b>
-            <div style="font-size:12px;color:#64748b;margin-bottom:8px">By <b>${esc(p.artisanName)}</b> · ${esc(p.location)}</div>
-            <p style="font-size:13px;color:#334155;margin:0">${esc(p.description)}</p>
+        <div class="card" style="border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.04);">
+          <img src="${p.image}" alt="${esc(p.title)}" style="width: 100%; height: 150px; object-fit: cover; display: block;">
+          <div style="padding: 10px 12px;">
+            <b style="font-size: 13px; display: block; margin-bottom: 2px; color: #0f172a;">${esc(p.title)}</b>
+            <div style="font-size: 11px; color: #64748b; margin-bottom: 6px;">By <b style="color: #334155;">${esc(p.artisanName)}</b> · <i class="fa-solid fa-location-dot" style="color:#e11d48"></i> ${esc(p.location)}</div>
+            <p style="font-size: 12px; color: #475569; margin: 0; line-height: 1.35;">${esc(p.description)}</p>
           </div>
         </div>
       `).join('')}
@@ -292,14 +302,12 @@ const views = {
 
 // --- GLOBAL EVENT LISTENERS ---
 document.addEventListener('click', function(e) {
-  // Navigation tabs
   const navBtn = e.target.closest('[data-go]');
   if (navBtn) {
     go(navBtn.getAttribute('data-go'));
     return;
   }
 
-  // Category filter clicks in Artisans view
   const catBtn = e.target.closest('[data-artcat]');
   if (catBtn) {
     selectedCat = catBtn.getAttribute('data-artcat');
@@ -308,7 +316,6 @@ document.addEventListener('click', function(e) {
   }
 });
 
-// Header Logo Home Link
 const homeBtn = $('#home');
 if (homeBtn) {
   homeBtn.onclick = () => go('discover');
